@@ -1,0 +1,7 @@
+#+title: Crafting Interpreters Logbook
+
+* DONE Lexing (chapter 4)
+Pretty similar to the /same/ chapter in crafting an interpreter in go, in this case it seem a little bit more engineered, also /lox/, altough simple, has more feature than /monkey/.
+* DONE Representing code (Chapter 5)
+Define some class that in the next chapter will be used to build the AST.
+Really nice explanation of the [[https://en.wikipedia.org/wiki/Visitor_pattern][visitor pattern]], even better than GoF.
