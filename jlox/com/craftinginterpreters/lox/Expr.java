@@ -3,6 +3,7 @@ package com.craftinginterpreters.lox;
 import java.util.List;
 
 public abstract class Expr{
+
     interface Visitor<R> {
         public R visitBinaryExpr(Binary expr);
         public R visitGroupingExpr(Grouping expr);
