@@ -137,6 +137,14 @@ public class Scanner {
                 string();
                 break;
 
+            case '?':
+                addToken(TokenType.QUESTION_MARK);
+                break;
+
+            case ':':
+                addToken(TokenType.COLON);
+                break;
+
             default:
                 if(isDigit(c)) {
                    number();

@@ -25,9 +25,40 @@ public class Parser {
         }
     }
 
-    // expression -> equality
+    // expression -> comma
     private Expr expression() {
-        return equality();
+        return comma();
+    }
+
+    // comma -> ternary ("," ternary)*
+    private Expr comma() {
+        Expr expr = ternary();
+
+        while(match(TokenType.COMMA)) {
+            Token operator = previous();
+            Expr right = ternary();
+            expr = new Expr.Binary(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    // ternary -> equality ( "?" expression ":" expression )*
+    private Expr ternary() {
+        Expr expr = equality();
+
+        while(match(TokenType.QUESTION_MARK)) {
+            Token leftOperator = previous();
+            Expr consequence = expression();
+
+            Token rightOperator = consume(TokenType.COLON, "Expect ':' after expression.");
+
+            Expr alternative = expression();
+
+            expr = new Expr.Ternary(expr, leftOperator, consequence, rightOperator, alternative);
+        }
+
+        return expr;
     }
 
     // equality -> comparison (( != | ==) comparison)*

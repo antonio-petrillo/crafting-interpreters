@@ -14,6 +14,13 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitTernaryExpr(Expr.Ternary expr) {
+        // I.E (x == y ? A : B) => (?: (x == y) A B)
+        return parenthesize(expr.leftOperator.lexeme + expr.rightOperator.lexeme,
+                            expr.condition, expr.consequence, expr.alternative);
+    }
+
+    @Override
     public String visitGroupingExpr(Expr.Grouping expr) {
         return parenthesize("group", expr.expression);
     }
