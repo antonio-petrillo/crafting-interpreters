@@ -1,7 +1,15 @@
 #+title: Crafting Interpreters Logbook
 
-* DONE Lexing (chapter 4)
+* DONE Chapter 4 - Lexing
 Pretty similar to the /same/ chapter in crafting an interpreter in go, in this case it seem a little bit more engineered, also /lox/, altough simple, has more feature than /monkey/.
-* DONE Representing code (Chapter 5)
+* DONE Chapter 5 - Representing code
 Define some class that in the next chapter will be used to build the AST.
 Really nice explanation of the [[https://en.wikipedia.org/wiki/Visitor_pattern][visitor pattern]], even better than GoF.
+* DONE Chapter 6 - Parsing Expression
+I really like the algorithm to parse expression into the AST, I find it easier to understand than [[https://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/][Pratt Parser]].
+* DONE Chapter 7 - Evaluating Expression
+The java code is not that idiomatic, but since the nature of the project it is ok.
+This tell more about the standards and what we are taught to be good in a language rather than /this code is bad/.
+* DONE Chapter 8 - Statement and State
+Same observation from chapter 7.
+A quick side note, the implementation of enclosing environment may cause a lot of problem in a concurrent version of lox, luckily this is not the case.
