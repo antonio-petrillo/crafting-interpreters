@@ -176,7 +176,7 @@ public class Scanner {
         if (type == null) {
             type = TokenType.IDENTIFIER;
         }
-        addToken(TokenType.IDENTIFIER);
+        addToken(type);
     }
 
     private char advance() {
