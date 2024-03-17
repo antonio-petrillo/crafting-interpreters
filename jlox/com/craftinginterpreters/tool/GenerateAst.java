@@ -13,15 +13,19 @@ public class GenerateAst {
 
         String outputDir = args[0];
         defineAst(outputDir, "Expr",
-                  List.of("Binary   : Expr left, Token operator, Expr right",
+                  List.of("Assign   : Token name, Expr value",
+                          "Binary   : Expr left, Token operator, Expr right",
                           "Grouping : Expr expression",
                           "Literal  : Object value",
-                          "Unary    : Token operator, Expr right"
+                          "Unary    : Token operator, Expr right",
+                          "Variable : Token name"
                           ));
 
         defineAst(outputDir, "Stmt",
                   List.of("Expression : Expr expression",
-                          "Print      : Expr expression"
+                          "Block      : List<Stmt> statements",
+                          "Print      : Expr expression",
+                          "Var        : Token name, Expr initializer"
                           ));
     }
 

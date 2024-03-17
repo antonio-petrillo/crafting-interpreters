@@ -7,6 +7,8 @@ public abstract class Stmt {
     interface Visitor<R> {
         public R visitExpressionStmt(Expression stmt);
         public R visitPrintStmt(Print stmt);
+        public R visitVarStmt(Var stmt);
+        public R visitBlockStmt(Block stmt);
     }
 
     public abstract <R> R accept(Visitor<R> visitor);
@@ -32,6 +34,32 @@ public abstract class Stmt {
 
         public <R> R accept(Visitor<R> visitor) {
             return visitor.visitPrintStmt(this);
+        }
+    }
+
+    public static class Var extends Stmt {
+        final Expr initializer;
+        final Token name;
+
+        public Var(Token name, Expr initializer) {
+            this.name = name;
+            this.initializer = initializer;
+        }
+
+        public <R> R accept(Visitor<R> visitor) {
+            return visitor.visitVarStmt(this);
+        }
+    }
+
+    public static class Block extends Stmt {
+        final List<Stmt> statements;
+
+        public Block(List<Stmt> statements) {
+            this.statements = statements;
+        }
+
+        public <R> R accept(Visitor<R> visitor) {
+            return visitor.visitBlockStmt(this);
         }
     }
 

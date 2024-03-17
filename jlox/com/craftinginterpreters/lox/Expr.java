@@ -14,11 +14,16 @@ public abstract class Expr {
         public R visitLiteralExpr(Literal expr);
 
         public R visitUnaryExpr(Unary expr);
+
+        public R visitVariableExpr(Variable expr);
+
+        public R visitAssignExpr(Assign expr);
+
     }
 
     public abstract <R> R accept(Visitor<R> visitor);
 
-    static class Binary extends Expr {
+    public static class Binary extends Expr {
         public Binary(Expr left, Token operator, Expr right) {
             this.left = left;
             this.operator = operator;
@@ -35,7 +40,7 @@ public abstract class Expr {
         final Expr right;
     }
 
-    static class Ternary extends Expr {
+    public static class Ternary extends Expr {
         public Ternary(Expr condition, Token leftOperator, Expr consequence, Token rightOperator, Expr alternative) {
             this.condition = condition;
             this.leftOperator = leftOperator;
@@ -56,7 +61,7 @@ public abstract class Expr {
         final Expr alternative;
     }
 
-    static class Grouping extends Expr {
+    public static class Grouping extends Expr {
         public Grouping(Expr expression) {
             this.expression = expression;
         }
@@ -69,7 +74,7 @@ public abstract class Expr {
         final Expr expression;
     }
 
-    static class Literal extends Expr {
+    public static class Literal extends Expr {
         public Literal(Object value) {
             this.value = value;
         }
@@ -82,7 +87,7 @@ public abstract class Expr {
         final Object value;
     }
 
-    static class Unary extends Expr {
+    public static class Unary extends Expr {
         public Unary(Token operator, Expr right) {
             this.operator = operator;
             this.right = right;
@@ -95,5 +100,33 @@ public abstract class Expr {
 
         final Token operator;
         final Expr right;
+    }
+
+    public static class Variable extends Expr {
+        public final Token name;
+
+        public Variable(Token name) {
+            this.name = name;
+        }
+
+        @Override
+        public <R> R accept(Visitor<R> visitor) {
+            return visitor.visitVariableExpr(this);
+        }
+    }
+
+    public static class Assign extends Expr {
+        public final Token name;
+        public final Expr value;
+
+        public Assign(Token name, Expr value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        @Override
+        public <R> R accept(Visitor<R> visitor) {
+            return visitor.visitAssignExpr(this);
+        }
     }
 }

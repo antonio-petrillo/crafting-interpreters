@@ -1,0 +1,7 @@
+#+title: Note
+
+* Chapter 8 - Statement and State
+** Exercise 3
+It work as expected, and also behave as in many other language.
+It is untuitive that the right hand side is evaluated before the left hand side, so the ~a + 2~ use the ~a~ from outer env and bind to ~a~ in the inner env.
+The print statement use the ~a~ from the inner/local env.
