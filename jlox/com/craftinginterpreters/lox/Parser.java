@@ -50,8 +50,11 @@ public class Parser {
         }
     }
 
-    // statement -> exprStmt | printStmt ;
+    // statement -> exprStmt | printStmt | block | ifStmt;
     private Stmt statement() {
+		if (match(TokenType.IF)) {
+			return ifStatement();
+		}
         if (match(TokenType.PRINT)) {
             return printStatement();
         }
@@ -61,6 +64,19 @@ public class Parser {
 
         return expressionStatement();
     }
+
+    // ifStmt -> "if" "(" condition ")" statement ("else" statement) ;
+	private Stmt ifStatement() {
+		consume(TokenType.LEFT_PAREN, "Expect '(' after if.");
+		Expr condition = expression();
+		consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+		Stmt ifBranch = statement();
+		Stmt elseBranch = null;
+		if (match(TokenType.ELSE)) {
+			elseBranch = statement();
+		}
+		return new Stmt.If(condition, ifBranch, elseBranch);
+	}
 
     // printStmt -> "print" expression ";" ;
     private Stmt printStatement() {
@@ -135,9 +151,9 @@ public class Parser {
         return expr;
     }
 
-    // ternary -> equality ( "?" expression ":" expression )*
+    // ternary -> logic_or | equality ( "?" expression ":" expression )*
     private Expr ternary() {
-        Expr expr = equality();
+        Expr expr = or();
 
         while(match(TokenType.QUESTION_MARK)) {
             Token leftOperator = previous();
@@ -152,6 +168,32 @@ public class Parser {
 
         return expr;
     }
+
+	// logic_or -> logic_and ("or" logic_and)*;
+	private Expr or() {
+		Expr expr = and();
+
+		while(match(TokenType.OR)) {
+			Token operator = previous();
+			Expr right = and();
+			expr = new Expr.Logical(expr, operator, right);
+		}
+
+		return expr;
+	}
+
+	// logic_and -> equality ("and" equality)*;
+	private Expr and() {
+		Expr expr = equality();
+
+		while(match(TokenType.AND)){
+			Token operator = previous();
+			Expr right = equality();
+			expr = new Expr.Logical(expr, operator, right);
+		}
+
+		return expr;
+	}
 
     // equality -> comparison (( != | ==) comparison)*
     private Expr equality() {

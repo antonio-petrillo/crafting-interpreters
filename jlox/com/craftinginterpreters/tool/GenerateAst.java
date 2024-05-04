@@ -17,6 +17,8 @@ public class GenerateAst {
                           "Binary   : Expr left, Token operator, Expr right",
                           "Grouping : Expr expression",
                           "Literal  : Object value",
+						  "Logical  : Expr left, Token operator, Expr right",
+						  "Logical  : Expr left, Token operator, Expr right",
                           "Unary    : Token operator, Expr right",
                           "Variable : Token name"
                           ));
@@ -25,6 +27,7 @@ public class GenerateAst {
                   List.of("Expression : Expr expression",
                           "Block      : List<Stmt> statements",
                           "Print      : Expr expression",
+						  "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
                           "Var        : Token name, Expr initializer"
                           ));
     }
