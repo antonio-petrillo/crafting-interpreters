@@ -5,3 +5,19 @@
 It work as expected, and also behave as in many other language.
 It is untuitive that the right hand side is evaluated before the left hand side, so the ~a + 2~ use the ~a~ from outer env and bind to ~a~ in the inner env.
 The print statement use the ~a~ from the inner/local env.
+
+* Chapter 9 - Control flow
+I've made some mistake in the past and picking up the project after a couple of months I was not able to find the mistake, hence I copied a version that work up to chapter 9 (if you ever see this, thanks [[https://github.com/Silvernitro/jlox.git][Silvernitro]]).
+** Exercise 1
+You can create control flow with dynamic dispatch, it is a little bit clumsy and not so much readable.
+So if you ever want to create a programming language without branching statements, please, keep it to yourself.
+To complete the answer we can define methods that act as =if= and =else= based on the type.
+To make it feasible we can make /one method/ that accept our concept of =truth= and another that accept =falsiness= (of course both should be able to accept a code block).
+** Exercise 2
+Dynamic dispatch is far more slower than branching hence we need our, hypothetical, language need to be optimized for dynamic dispatch.
+I can't name a language that use this concept for iteration but I can made some guesses:
++ =ruby=, it support /traditional/ loops, but it can also be implemented with objects.
++ =smalltalk, pharo=, in such languages I've heard that everything (even more than java) is an object.
++ =java=, in particular with =stream= (i.e. =IntStream=) you can write loop in an object oriented way (to me streams doesn't seem to functionals).
+** Exercise 3
+Add =break= instruction.

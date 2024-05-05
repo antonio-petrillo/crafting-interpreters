@@ -1,41 +1,40 @@
 package com.craftinginterpreters.lox;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Environment {
-    public final Environment enclosing;
+    private final Environment enclosing;
     private final Map<String, Object> values = new HashMap<>();
 
-    public Environment() {
+    /** The global environment has no parent **/
+    Environment() {
         enclosing = null;
     }
 
-    public Environment(Environment enclosing) {
+    /** All non-global environments must have a parent **/
+    Environment(Environment enclosing) {
         this.enclosing = enclosing;
     }
 
-    public void define(String name, Object value) {
+    void define(String name, Object value) {
         values.put(name, value);
     }
 
-    public Object get(Token name) {
-        if (values.containsKey(name.lexeme)) {
-            Object value = values.get(name.lexeme);
-            if (value == null) {
-                throw new RuntimeError(name, "Unitialized variable '" + name.lexeme + "'.");
-            }
-            return value;
+    Object get(Token token) {
+        String name = token.lexeme;
+        if (values.containsKey(name)) {
+            return values.get(name);
         }
 
         if (enclosing != null) {
-            return enclosing.get(name);
-       }
+            return enclosing.get(token);
+        }
 
-        throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
+        throw new RuntimeError(token, "Undefined variable '" + name + "'.");
     }
 
-    public void assign(Token name, Object value) {
+    void assign(Token name, Object value) {
         if (values.containsKey(name.lexeme)) {
             values.put(name.lexeme, value);
             return;

@@ -13,3 +13,4 @@ This tell more about the standards and what we are taught to be good in a langua
 * DONE Chapter 8 - Statement and State
 Same observation from chapter 7.
 A quick side note, the implementation of enclosing environment may cause a lot of problem in a concurrent version of lox, luckily this is not the case.
+* DONE Chapter 9 - Control flow
