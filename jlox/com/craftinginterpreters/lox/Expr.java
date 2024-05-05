@@ -5,6 +5,7 @@ import java.util.List;
 abstract class Expr {
     interface Visitor<R> {
         R visitBinaryExpr(Binary binary);
+        R visitCallExpr(Call binary);
         R visitGroupingExpr(Grouping grouping);
         R visitLiteralExpr(Literal literal);
         R visitUnaryExpr(Unary unary);
@@ -32,6 +33,22 @@ abstract class Expr {
         }
     }
 
+    static class Call extends Expr {
+        final Expr callee;
+        final Token paren;
+        final List<Expr> arguments;
+
+        Call(Expr callee, Token paren, List<Expr> arguments) {
+			this.callee = callee;
+			this.paren = paren;
+			this.arguments = arguments;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitCallExpr(this);
+        }
+    }
     static class Grouping extends Expr {
         final Expr expression;
 

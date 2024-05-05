@@ -3,6 +3,7 @@ package com.craftinginterpreters.lox;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public class Parser {
     private static class ParseError extends RuntimeException {}
@@ -10,9 +11,11 @@ public class Parser {
     private final List<Token> tokens;
     private int current = 0;
 	private int nesteLoopCount = 0;
+	private Random rng;
 
     Parser(List<Token> tokens) {
         this.tokens = tokens;
+		rng = new Random();
     }
 
     public List<Stmt> parse() {
@@ -30,6 +33,9 @@ public class Parser {
 
     private Stmt declaration() {
         try {
+			if (match(TokenType.FUN)) {
+				return function("function");
+			}
             if (match(TokenType.VAR)) {
                 return varDeclaration();
             }
@@ -56,6 +62,7 @@ public class Parser {
     private Stmt statement() {
         if (match(TokenType.LEFT_BRACE)) return blockStatement();
         if (match(TokenType.PRINT)) return printStatement();
+        if (match(TokenType.RETURN)) return returnStatement();
         if (match(TokenType.IF)) return ifStatement();
         if (match(TokenType.WHILE)) return whileStatement();
         if (match(TokenType.FOR)) return forStatement();
@@ -87,6 +94,16 @@ public class Parser {
         consume(TokenType.SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(value);
     }
+
+	private Stmt returnStatement() {
+		Token keyword = previous();
+		Expr value = null;
+		if (!check(TokenType.SEMICOLON)) {
+			value = expression();
+		}
+		consume(TokenType.SEMICOLON, "Expect ';' after return value");
+		return new Stmt.Return(keyword, value);
+	}
 
     private Stmt ifStatement() {
         consume(TokenType.LEFT_PAREN, "Expect '(' after if.");
@@ -167,6 +184,31 @@ public class Parser {
 		consume(TokenType.SEMICOLON, "Expect ';' after break.");
         return new Stmt.Break();
     }
+
+	private Stmt.Function function(String kind) {
+		Token name = null;
+		if (check(TokenType.IDENTIFIER)) {
+			name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+		} else {
+			String fakeLexeme = "@-fn-" + Integer.valueOf(rng.nextInt()).toString() + Float.valueOf(rng.nextFloat()).toString();
+			name = new Token(TokenType.IDENTIFIER, fakeLexeme, null, -1);
+		}
+		consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
+		List<Token> parameters = new ArrayList<>();
+		if (!check(TokenType.RIGHT_PAREN)) {
+			do {
+				if (parameters.size() >= 0xFF) {
+					error(peek(), "Can't have more than 0xFF parameters.");
+				}
+				parameters.add(consume(TokenType.IDENTIFIER, "Expect paramter name."));
+			} while (match(TokenType.COMMA));
+		}
+		consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+
+		consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+		List<Stmt> body = block();
+		return new Stmt.Function(name, parameters, body);
+	}
 
     private Stmt expressionStatement() {
         Expr value = expression();
@@ -278,8 +320,40 @@ public class Parser {
             return new Expr.Unary(operator, right);
         }
 
-        return primary();
+        // return primary();
+        return call();
     }
+
+	private Expr finishCall(Expr callee) {
+		List<Expr> arguments = new ArrayList<>();
+
+		if(!check(TokenType.RIGHT_PAREN)) {
+			do {
+				if (arguments.size() >= 0xFF) {
+					error(peek(), "Can't have more than 0xFF arguments.");
+				}
+				arguments.add(expression());
+			} while(match(TokenType.COMMA));
+		}
+
+		Token paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
+
+		return new Expr.Call(callee, paren, arguments);
+	}
+
+	private Expr call() {
+		Expr expr = primary();
+
+		while(true) {
+			if(match(TokenType.LEFT_PAREN)) {
+				expr = finishCall(expr);
+				continue;
+			}
+			break;
+		}
+
+		return expr;
+	}
 
     private Expr primary() {
         if (match(TokenType.TRUE)) return new Expr.Literal(true);

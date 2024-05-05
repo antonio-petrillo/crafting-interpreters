@@ -67,7 +67,7 @@ public class Lox {
         // check for parse errors
         if (hadError) return;
 
-        interpreter.interpret(statements);
+		interpreter.interpret(statements);
     }
 
     static void error(int line, String message) {

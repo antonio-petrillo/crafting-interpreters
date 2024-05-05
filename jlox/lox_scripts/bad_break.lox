@@ -1,0 +1,4 @@
+// the syntax error is thrown at compile time, even if the language is interpreted, suck on this python
+if (i < 10) {
+  break;
+}

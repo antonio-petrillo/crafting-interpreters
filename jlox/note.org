@@ -21,3 +21,21 @@ I can't name a language that use this concept for iteration but I can made some 
 + =java=, in particular with =stream= (i.e. =IntStream=) you can write loop in an object oriented way (to me streams doesn't seem to functionals).
 ** Exercise 3
 Add =break= instruction.
+
+* Chapter 10 - Functions
+** Exercise 1
+Because in smalltalk everything is an object, hence if you create a function you have a constructor with a predetermined number of argument.
+If you call such a function with the wrong number it won't compile.
+** Exercise 2
+Add anonymous function.
+** Exercise 3
+#+begin_src lox
+fun scope(a) {
+  var a = "local";
+}
+#+end_src
+Of course it is a valid /lox/ script.
+When a function is defined the paramters are binded to the function environment.
+Subsequently the rest of the instruction override the local env.
+For me a language should do what /lox/ is doing, allow the code and use the innermost definition in the function body.
+Some exception can be made for functional language, but not by much.
