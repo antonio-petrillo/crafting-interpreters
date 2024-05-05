@@ -14,3 +14,4 @@ This tell more about the standards and what we are taught to be good in a langua
 Same observation from chapter 7.
 A quick side note, the implementation of enclosing environment may cause a lot of problem in a concurrent version of lox, luckily this is not the case.
 * DONE Chapter 9 - Control flow
+The book is still really good and entertaining, but the far I go the more I think that the java code written is not that great.
