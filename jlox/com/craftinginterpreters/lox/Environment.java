@@ -21,6 +21,18 @@ public class Environment {
         values.put(name, value);
     }
 
+	Environment ancestor(int distance) {
+		Environment environment = this;
+		for (int i = 0; i < distance; i++) {
+			environment = environment.enclosing;
+		}
+		return environment;
+	}
+
+	Object getAt(int distance, String name) {
+		return ancestor(distance).values.get(name);
+	}
+
     Object get(Token token) {
         String name = token.lexeme;
         if (values.containsKey(name)) {
