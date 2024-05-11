@@ -52,3 +52,21 @@ After the =resolve= method I will check if every variable defined is accessed, e
 Maybe an array that count the references in the blocks to each variable (except definition and initialization), if it is $1$ then there is an /error/.
 ** Exercise 4
 Pretty simple, provided an =ArrayList= and a =BigInteger= generator the request is pretty trivial, I just need to add an index to the variables fields.
+
+* Chapter 12 - Classes
+** Exercise 1
+Altough it suggest to reuse the =class= keyword I will prefer a new keyword for /static/ methods.
+The idea that come to mind is to do something similar to =this=.
+When a static method is found it should add a function to the scope of the class (it require a new scope who sits below =this=).
+I don't think I need to add more code to access =class.static_method(...)=.
+** Exercise 2
+Yuck, this look sick and awful at the same time!
+To implement this I will check if after an identifier there is a body, in such case I will parse it (this doesn't seem trivial).
+After I have parsed the body I will create a function with such name but no parameter.
+Maybe I should add a new rule to call this kind of methods without the use oof parentheses.
+
+** Exercise 3
+Using =public= and =private= make your language more robust, less flexible, it follow more the encapsulation.
+This usually lead to hard to extend and hard to maintain code (on the long run I mean, especially I you pick the wrong abstractions) but more performant.
+I only say this because among the language that I've used the ones with /public/, /private/ are more perfomant (compared to other OO languages).
+On the other hand avoid such complicancy let you write code faster it also easy to refactor.

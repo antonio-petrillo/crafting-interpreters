@@ -33,6 +33,9 @@ public class Parser {
 
     private Stmt declaration() {
         try {
+			if (match(TokenType.CLASS)) {
+				return classDeclaration();
+			}
 			if (match(TokenType.FUN)) {
 				return function("function");
 			}
@@ -46,6 +49,20 @@ public class Parser {
             return null;
         }
     }
+
+	private Stmt classDeclaration() {
+		Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
+		consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
+
+		List<Stmt.Function> methods = new ArrayList<>();
+		while(!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+			methods.add(function("method"));
+		}
+
+		consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
+
+		return new Stmt.Class(name, methods);
+	}
 
     private Stmt varDeclaration() {
         Token name = consume(TokenType.IDENTIFIER, "Expect variable name.");
@@ -229,7 +246,10 @@ public class Parser {
 
             if (expr instanceof Expr.Variable) {
                 return new Expr.Assign(((Expr.Variable) expr).name, right);
-            }
+            } else if (expr instanceof Expr.Get) {
+				Expr.Get get = (Expr.Get)expr;
+				return new Expr.Set(get.object, get.name, right);
+			}
 
             throw error(previous, "Invalid assignment target.");
         }
@@ -347,21 +367,36 @@ public class Parser {
 		while(true) {
 			if(match(TokenType.LEFT_PAREN)) {
 				expr = finishCall(expr);
-				continue;
+			} else if(match(TokenType.DOT)) {
+				Token name = consume(TokenType.IDENTIFIER, "Expect property name afer '.'.");
+				expr = new Expr.Get(expr, name);
+			} else {
+				break;
 			}
-			break;
 		}
 
 		return expr;
 	}
 
     private Expr primary() {
-        if (match(TokenType.TRUE)) return new Expr.Literal(true);
-        if (match(TokenType.FALSE)) return new Expr.Literal(false);
-        if (match(TokenType.NIL)) return new Expr.Literal(null);
+        if (match(TokenType.TRUE)){
+			return new Expr.Literal(true);
+		}
+
+        if (match(TokenType.FALSE)) {
+			return new Expr.Literal(false);
+		}
+
+        if (match(TokenType.NIL)){
+			return new Expr.Literal(null);
+		}
 
         if (match(TokenType.STRING, TokenType.NUMBER)) {
             return new Expr.Literal(previous().literal);
+        }
+
+        if (match(TokenType.THIS)) {
+            return new Expr.This(previous());
         }
 
         if (match(TokenType.IDENTIFIER)) {
