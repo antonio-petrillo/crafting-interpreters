@@ -70,3 +70,15 @@ Using =public= and =private= make your language more robust, less flexible, it f
 This usually lead to hard to extend and hard to maintain code (on the long run I mean, especially I you pick the wrong abstractions) but more performant.
 I only say this because among the language that I've used the ones with /public/, /private/ are more perfomant (compared to other OO languages).
 On the other hand avoid such complicancy let you write code faster it also easy to refactor.
+
+* Chapter 13 - Inheritance
+** Exercise 1
+None of that, I find multiple inheritance bad, in general OOP but I may have bias on this regard.
+Something similar that I liked is multimethods in clojure.
+** Exercise 2
+This will work only with single inheritance.
+To make it work, when I bind/resolve super I must also bind =inner= in the superclass to point to the subclass environment.
+** Exercise 3
++ =?:=, I've implemented it but it is lost in time (in git) now.
++ =orelse= keyword that act like =zig=.
++ More than adding a new feature, I would like to write a langauge in which everything is a expression, this may create some problems with =if=, =loop=, etc...
