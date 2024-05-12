@@ -45,7 +45,18 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
 	chunk->lines[chunk->count_lines] | count;
   } else {
 	// new line, add entry
-	chunk->linex[chunk->count_lines++] = line;
+	chunk->lines[chunk->count_lines++] = line;
+  }
+}
+
+void writeConstant(Chunk* chunk, Value value, int line) {
+  int offset = addConstant(chunk, value);
+  if ((chunk->constants).count > 255) {
+	// op_constant_long
+	writeChunk(chunk, OP_CONSTANT_LONG, line);
+  } else {
+	// op_constant
+	writeChunk(chunk, OP_CONSTANT, line);
   }
 }
 
