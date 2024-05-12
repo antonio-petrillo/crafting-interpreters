@@ -1,45 +1,46 @@
 #+title: Crafting Interpreters Logbook
 
-* DONE Chapter 4 - Lexing
+* Part II
+** DONE Chapter 4 - Lexing
 Pretty similar to the /same/ chapter in crafting an interpreter in go, in this case it seem a little bit more engineered, also /lox/, altough simple, has more feature than /monkey/.
-* DONE Chapter 5 - Representing code
+** DONE Chapter 5 - Representing code
 Define some class that in the next chapter will be used to build the AST.
 Really nice explanation of the [[https://en.wikipedia.org/wiki/Visitor_pattern][visitor pattern]], even better than GoF.
-* DONE Chapter 6 - Parsing Expression
+** DONE Chapter 6 - Parsing Expression
 I really like the algorithm to parse expression into the AST, I find it easier to understand than [[https://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/][Pratt Parser]].
-* DONE Chapter 7 - Evaluating Expression
+** DONE Chapter 7 - Evaluating Expression
 The java code is not that idiomatic, but since the nature of the project it is ok.
 This tell more about the standards and what we are taught to be good in a language rather than /this code is bad/.
 
-* DONE Chapter 8 - Statement and State
-** Exercise 3
+** DONE Chapter 8 - Statement and State
+*** Exercise 3
 It work as expected, and also behave as in many other language.
 It is untuitive that the right hand side is evaluated before the left hand side, so the ~a + 2~ use the ~a~ from outer env and bind to ~a~ in the inner env.
 The print statement use the ~a~ from the inner/local env.
 
-* DONE Chapter 9 - Control flow
+** DONE Chapter 9 - Control flow
 I've made some mistake in the past and picking up the project after a couple of months I was not able to find the mistake, hence I copied a version that work up to chapter 9 (if you ever see this, thanks [[https://github.com/Silvernitro/jlox.git][Silvernitro]]).
-** Exercise 1
+*** Exercise 1
 You can create control flow with dynamic dispatch, it is a little bit clumsy and not so much readable.
 So if you ever want to create a programming language without branching statements, please, keep it to yourself.
 To complete the answer we can define methods that act as =if= and =else= based on the type.
 To make it feasible we can make /one method/ that accept our concept of =truth= and another that accept =falsiness= (of course both should be able to accept a code block).
-** Exercise 2
+*** Exercise 2
 Dynamic dispatch is far more slower than branching hence we need our, hypothetical, language need to be optimized for dynamic dispatch.
 I can't name a language that use this concept for iteration but I can made some guesses:
 + =ruby=, it support /traditional/ loops, but it can also be implemented with objects.
 + =smalltalk, pharo=, in such languages I've heard that everything (even more than java) is an object.
 + =java=, in particular with =stream= (i.e. =IntStream=) you can write loop in an object oriented way (to me streams doesn't seem to functionals).
-** Exercise 3
+*** Exercise 3
 Add =break= instruction.
 
-* DONE Chapter 10 - Functions
-** Exercise 1
+** DONE Chapter 10 - Functions
+*** Exercise 1
 Because in smalltalk everything is an object, hence if you create a function you have a constructor with a predetermined number of argument.
 If you call such a function with the wrong number it won't compile.
-** Exercise 2
+*** Exercise 2
 Add anonymous function.
-** Exercise 3
+*** Exercise 3
 #+begin_src lox
 fun scope(a) {
   var a = "local";
@@ -51,55 +52,154 @@ Subsequently the rest of the instruction override the local env.
 For me a language should do what /lox/ is doing, allow the code and use the innermost definition in the function body.
 Some exception can be made for functional language, but not by much.
 
-* DONE Chapter 11 - Resolving and binding
+** DONE Chapter 11 - Resolving and binding
 From now on I will not implement the exercise like /implement ?:/, /implement break/, they stack up adding more complexity at each chapter, instead I will provide a desccription of how I will proceed.
-** Exercise 1
+*** Exercise 1
 A function only need to be defined, instead an initializer need to be executed before we know the value to associate to the variable.
-** Exercise 2
+*** Exercise 2
 All the ones I can think about will allow such definition, to me make quite sense.
 I want to initialize =a=, to initialize =a= I need to access =a=, but it is defined outside the scope, hence the expression on the right refer to the outer (global) =a=.
-** Exercise 3
+*** Exercise 3
 After the =resolve= method I will check if every variable defined is accessed, even through the map I already have or through another one.
 Maybe an array that count the references in the blocks to each variable (except definition and initialization), if it is $1$ then there is an /error/.
-** Exercise 4
+*** Exercise 4
 Pretty simple, provided an =ArrayList= and a =BigInteger= generator the request is pretty trivial, I just need to add an index to the variables fields.
 
-* DONE Chapter 12 - Classes
-** Exercise 1
+** DONE Chapter 12 - Classes
+*** Exercise 1
 Altough it suggest to reuse the =class= keyword I will prefer a new keyword for /static/ methods.
 The idea that come to mind is to do something similar to =this=.
 When a static method is found it should add a function to the scope of the class (it require a new scope who sits below =this=).
 I don't think I need to add more code to access =class.static_method(...)=.
-** Exercise 2
+*** Exercise 2
 Yuck, this look sick and awful at the same time!
 To implement this I will check if after an identifier there is a body, in such case I will parse it (this doesn't seem trivial).
 After I have parsed the body I will create a function with such name but no parameter.
 Maybe I should add a new rule to call this kind of methods without the use oof parentheses.
 
-** Exercise 3
+*** Exercise 3
 Using =public= and =private= make your language more robust, less flexible, it follow more the encapsulation.
 This usually lead to hard to extend and hard to maintain code (on the long run I mean, especially I you pick the wrong abstractions) but more performant.
 I only say this because among the language that I've used the ones with /public/, /private/ are more perfomant (compared to other OO languages).
 On the other hand avoid such complicancy let you write code faster it also easy to refactor.
 
-* DONE Chapter 13 - Inheritance
-** Exercise 1
+** DONE Chapter 13 - Inheritance
+*** Exercise 1
 None of that, I find multiple inheritance bad, in general OOP but I may have bias on this regard.
 Something similar that I liked is multimethods in clojure.
-** Exercise 2
+*** Exercise 2
 This will work only with single inheritance.
 To make it work, when I bind/resolve super I must also bind =inner= in the superclass to point to the subclass environment.
-** Exercise 3
+*** Exercise 3
 + =?:=, I've implemented it but it is lost in time (in git) now.
 + =orelse= keyword that act like =zig=.
 + More than adding a new feature, I would like to write a langauge in which everything is a expression, this may create some problems with =if=, =loop=, etc...
-
-* TODO Chapter 14 - Chunks of Bytecode
+* Part III
+** DONE Chapter 14 - Chunks of Bytecode
 The book introduce a new way to implement =lox=.
 Write a =VM= that can interpret =bytecode= and compile =lox= source to that bytecode.
-** DONE Exercise 1
-** Exercise 2
-** Exercise 3
+*** DONE Exercise 1
+*** DONE Exercise 2
+*** DONE Exercise 3
 The simplest one that came up to my mind is to allocate a single /giga-slab/ on memory with =malloc=.
 After I will implement 2 functions =my_malloc= and =my_free=, the first return the pointer of the next free spot in the slab, the other just zero out a spot of memory.
 It will be very inefficient, the memory will be all contiguos, a free will create a hole, frequent compression etc...
+
+** DONE Chapter 15 - A Virtual Machine
+*** Exercise 1
++ $1 * 2 + 3$:
+  #+begin_quote
+  OP_CONSTANT
+  1
+  OP_CONSTANT
+  2
+  OP_MULTIPLY
+  OP_CONSTANT
+  3
+  OP_ADD
+  #+end_quote
++ $1 + 2 * 3$:
+  #+begin_quote
+  OP_CONSTANT
+  1
+  OP_CONSTANT
+  2
+  OP_CONSTANT
+  3
+  OP_MULTIPLY
+  OP_ADD
+  #+end_quote
++ $3 - 2 - 1$:
+  #+begin_quote
+  OP_CONSTANT
+  3
+  OP_CONSTANT
+  2
+  OP_SUB
+  OP_CONSTANT
+  1
+  OP_SUB
+  #+end_quote
++ $1 + 2 * 3 - 4 / - 5$:
+  #+begin_quote
+  OP_CONSTANT
+  1
+  OP_CONSTANT
+  2
+  OP_CONSTANT
+  3
+  OP_MULTIPLY
+  OP_ADD
+  OP_CONSTANT
+  3
+  OP_CONSTANT
+  5
+  OP_NEGATE
+  OP_DIVIDE
+  OP_SUB
+  #+end_quote
+*** Exercise 2
++ $4 - 3 * -2$, without =OP_NEGATE=:
+  #+begin_quote
+  OP_CONSTANT
+  4
+  OP_CONSTANT
+  3
+  OP_CONSTANT
+  0
+  OP_CONSTANT
+  2
+  OP_SUB
+  OP_MULTIPLY
+  OP_SUB
+  #+end_quote
++ $4 - 3 * -2$, without =OP_SUB=:
+  #+begin_quote
+  OP_CONSTANT
+  4
+  OP_CONSTANT
+  3
+  OP_CONSTANT
+  2
+  OP_NEGATE
+  OP_MULTIPLY
+  OP_NEGATE
+  OP_ADD
+  #+end_quote
+*** Exercise 3
+**** PRO
++ The benefits are that we allow to our program to be infinitely long (this not a real benefit).
++ The most important thing is that we avoid /undefined behavior/ on stack overflow.
+**** CONST
++ As our programs grow it will occupy far more memory thant it needs, it will also face a natural slowdown.
++ If our program goes in infinite recursion it will consume all of our memory.
+*** Exercise 4
+It's easy as do:
+#+begin_src c
+...
+case OP_NEGATE: {
+  *vm.stackTop *= -1;
+}
+...
+#+end_src
+This optimization, in general, can be done for every unary operation.
