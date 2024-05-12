@@ -97,5 +97,9 @@ To make it work, when I bind/resolve super I must also bind =inner= in the super
 * TODO Chapter 14 - Chunks of Bytecode
 The book introduce a new way to implement =lox=.
 Write a =VM= that can interpret =bytecode= and compile =lox= source to that bytecode.
-** Exercise 1
+** DONE Exercise 1
 ** Exercise 2
+** Exercise 3
+The simplest one that came up to my mind is to allocate a single /giga-slab/ on memory with =malloc=.
+After I will implement 2 functions =my_malloc= and =my_free=, the first return the pointer of the next free spot in the slab, the other just zero out a spot of memory.
+It will be very inefficient, the memory will be all contiguos, a free will create a hole, frequent compression etc...
