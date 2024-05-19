@@ -190,7 +190,7 @@ It will be very inefficient, the memory will be all contiguos, a free will creat
 **** PRO
 + The benefits are that we allow to our program to be infinitely long (this not a real benefit).
 + The most important thing is that we avoid /undefined behavior/ on stack overflow.
-**** CONST
+**** CONS
 + As our programs grow it will occupy far more memory thant it needs, it will also face a natural slowdown.
 + If our program goes in infinite recursion it will consume all of our memory.
 *** Exercise 4
@@ -203,3 +203,17 @@ case OP_NEGATE: {
 ...
 #+end_src
 This optimization, in general, can be done for every unary operation.
+
+** DONE Chapter 16 - Scanning on Demand
+*** Exercise I
+Personally I would define a new token type, =TOKEN_STRING_INTERPOLATION=, which will be produced when such a string will be parsed.
+Then instead of return a pointer to a string, I will return a function that get invoked everytime the string literal is used.
+Many things can be done to improve this approahc, return just a normal string if the variable interpolated are just const or cache the result (discard if the value interpolated var change) for the lifetime of a body after the first evaluation.
+*** Exercise II
+I didn't lookup but to me seem obvious that /java/ and /c#/ handle all the variable definition with a special function.
+When the parser start read =vector<= it put itself in a state of /OK I'm reading a var definition/ and handle =>>= differently than normal.
+*** Exercise III
+Also in =lox= there are =super= and =this= that doesn't always makes sense, even a basic =if/else=.
+The implementation depends:
++ if the keywords are related to each other I will handle like we handle =if/else=.
++ if they are related to a particular scope I will handle like the =break= keyword.
