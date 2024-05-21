@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I ./includes/
+CFLAGS=-I ./includes/ -Wall
 
 compile: ./src/*.c ./includes/*.h
 	$(CC) $(CFLAGS) ./src/*.c -o ./out/clox

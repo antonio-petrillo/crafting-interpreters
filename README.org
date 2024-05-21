@@ -217,3 +217,33 @@ Also in =lox= there are =super= and =this= that doesn't always makes sense, even
 The implementation depends:
 + if the keywords are related to each other I will handle like we handle =if/else=.
 + if they are related to a particular scope I will handle like the =break= keyword.
+
+** DONE Chapter 17 - Compiling Expressions
+*** Exercise I
+1. $(-1 + 2) * 3 - -4$
+2. prefix grouping
+3. unary negate
+4. unary number
+5. infix plus
+6. unary number
+7. consume =RIGHT_PAREN=
+8. infix mul
+9. unary number
+10. infifx minux
+11. unary negate
+12. unary number
+13. popping up
+14. (something (-4))
+15. (something - (-4))
+16. (something 3 - (-4))
+17. (something * 3 - (-4))
+18. ((something) * 3 - (-4))
+19. ((something 2) * 3 - (-4))
+20. ((something + 2) * 3 - (-4))
+21. ((something 1 + 2) * 3 - (-4))
+22. (((-1) + 2) * 3 - (-4))
+
+*** Exercise II
+The =!= is used both as negation and ~!=~.
+*** Exercise III
+I will add a new column to the table specific for the mixfix operator and procede as usual, mixfix (like =?:= have higher precedence).
