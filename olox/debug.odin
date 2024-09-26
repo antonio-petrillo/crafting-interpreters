@@ -26,6 +26,22 @@ disassemble_instruction :: proc(c: ^Chunk, offset: uint) -> uint {
 
     case byte(OpCode.OP_CONSTANT):
         return constant_instruction("OP_CONSTANT", c, offset)
+
+    case byte(OpCode.OP_NEGATE):
+        return simple_instruction("OP_NEGATE", offset)
+
+    case byte(OpCode.OP_ADD):
+        return simple_instruction("OP_ADD", offset)
+
+    case byte(OpCode.OP_SUBTRACT):
+        return simple_instruction("OP_SUBTRACT", offset)
+
+    case byte(OpCode.OP_MULTIPLY):
+        return simple_instruction("OP_MULTIPLY", offset)
+
+    case byte(OpCode.OP_DIVIDE):
+        return simple_instruction("OP_DIVIDE", offset)
+
     case:
         fmt.printf("Unknown opcode %d\n", instruction)
         return offset + 1

@@ -6,7 +6,6 @@ Value :: union {
     f64,
 }
 
-
 print_value :: proc(value: Value) {
     switch v in value  {
     case f64:

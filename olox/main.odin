@@ -15,6 +15,19 @@ main :: proc() {
     write_chunk(&c, byte(OpCode.OP_CONSTANT), 123)
     write_chunk(&c, byte(constant), 123) // this is uint!!!
 
+    constant = add_constant(&c, 3.4);
+    write_chunk(&c, byte(OpCode.OP_CONSTANT), 123);
+    write_chunk(&c, byte(constant), 123);
+
+    write_chunk(&c, byte(OpCode.OP_ADD), 123);
+
+    constant = add_constant(&c, 5.6);
+    write_chunk(&c, byte(OpCode.OP_CONSTANT), 123);
+    write_chunk(&c, byte(constant), 123);
+
+    write_chunk(&c, byte(OpCode.OP_DIVIDE), 123);
+
+    write_chunk(&c, byte(OpCode.OP_NEGATE), 123) // this is uint!!!
 
     write_chunk(&c, byte(OpCode.OP_RETURN), 124)
 
