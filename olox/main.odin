@@ -2,7 +2,11 @@ package main
 
 import "core:fmt"
 
+DEBUG_TRACE_EXECUTION :: true
+
 main :: proc() {
+    init_vm()
+
     c : Chunk = {}
 
     init_chunk(&c)
@@ -13,8 +17,10 @@ main :: proc() {
 
 
     write_chunk(&c, byte(OpCode.OP_RETURN), 124)
-    disassemble_chunk(&c, "test chunk")
 
+    interpret(&c)
+
+    free_vm()
     free_chunk(&c)
 
 }
