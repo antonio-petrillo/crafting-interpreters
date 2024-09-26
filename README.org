@@ -95,3 +95,6 @@ To make it work, when I bind/resolve super I must also bind =inner= in the super
 + =orelse= keyword that act like =zig=.
 + More than adding a new feature, I would like to write a langauge in which everything is a expression, this may create some problems with =if=, =loop=, etc...
 * Part III
+** Chapter 14
+So far so good, have a builtin dynamic array, testing suite and nicer syntax is almost a cheat.
+The approach used to implement dynamic array in C is to gross for me to type out.
