@@ -41,29 +41,29 @@ TokenType :: enum {
 
 scanner := Scanner{}
 
-init_scanner :: proc(source: string) {
-    scanner.start = 0
-    scanner.current = 0
-    scanner.line = 1
-    scanner.source = source
-    scanner.length = len(source)
+init_scanner :: proc(s: ^Scanner, source: string) {
+    s.start = 0
+    s.current = 0
+    s.line = 1
+    s.source = source
+    s.length = len(source)
 }
 
-skip_whitespace :: proc() {
+skip_whitespace :: proc(s: ^Scanner) {
     for {
-        switch peek() {
+        switch peek(s) {
         case ' ':
-            advance()
+            advance(s)
         case '\t':
-            advance()
+            advance(s)
         case '\n':
             scanner.line += 1
-            advance()
+            advance(s)
         case '/':
-            c, ok := peek_next()
+            c, ok := peek_next(s)
             if ok && c == '/' {
-                for peek() != '\n' && !is_at_end() {
-                    advance()
+                for peek(s) != '\n' && !is_at_end(s) {
+                    advance(s)
                 }
             } else {
                 return
@@ -74,15 +74,15 @@ skip_whitespace :: proc() {
     }
 }
 
-peek :: proc() -> u8 {
-   return scanner.source[scanner.current]
+peek :: proc(s: ^Scanner) -> u8 {
+   return s.source[s.current]
 }
 
-peek_next :: proc() -> (u8, bool) {
-    if is_at_end() {
+peek_next :: proc(s: ^Scanner) -> (u8, bool) {
+    if is_at_end(s) {
         return '0', false
     }
-    return scanner.source[scanner.current + 1], true
+    return s.source[s.current + 1], true
 }
 
 is_digit :: proc(c: u8) -> bool {
@@ -93,16 +93,16 @@ is_alpha :: proc(c: u8) -> bool {
     return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_'
 }
 
-make_token_identifier :: proc() -> Token {
-    for !is_at_end() && (is_alpha(peek()) || is_digit(peek())) {
-        advance()
+make_token_identifier :: proc(s: ^Scanner) -> Token {
+    for !is_at_end(s) && (is_alpha(peek(s)) || is_digit(peek(s))) {
+        advance(s)
     }
-    return make_token(identifier_type())
+    return make_token(s, identifier_type(s))
 }
 
-identifier_type :: proc() -> TokenType {
+identifier_type :: proc(s: ^Scanner) -> TokenType {
 
-    switch scanner.source[scanner.start:scanner.current] {
+    switch s.source[s.start:s.current] {
     case "and":
         return .AND
     case "class":
@@ -142,131 +142,129 @@ identifier_type :: proc() -> TokenType {
 
 }
 
-check_keyword :: proc(length: int, rest: string, on_match: TokenType) -> TokenType {
-    if string(scanner.source[scanner.start:scanner.start + length]) == rest {
-        return on_match
-    }
-    return .IDENTIFIER
+check_keyword :: proc(s: ^Scanner, length: int, rest: string, on_match: TokenType) -> TokenType {
+    src := s.source[s.start:s.start + length]
+    return src == rest ? on_match : .IDENTIFIER
 }
 
-scan_token :: proc() -> Token {
-    skip_whitespace()
-    scanner.start = scanner.current
-    if is_at_end() {
-        return make_token(.EOF)
+scan_token :: proc(s: ^Scanner) -> Token {
+    skip_whitespace(s)
+    s.start = s.current
+    if is_at_end(s) {
+        return make_token(s, .EOF)
     }
 
-    c := advance()
+    c := advance(s)
     if is_digit(c) {
-        return make_token_number()
+        return make_token_number(s)
     }
 
     if is_alpha(c) {
-        return make_token_identifier()
+        return make_token_identifier(s)
     }
 
     switch c {
     case '(':
-        return make_token(.LEFT_PAREN)
+        return make_token(s, .LEFT_PAREN)
     case ')':
-        return make_token(.RIGHT_PAREN)
+        return make_token(s, .RIGHT_PAREN)
     case '{':
-        return make_token(.LEFT_BRACE)
+        return make_token(s, .LEFT_BRACE)
     case '}':
-        return make_token(.RIGHT_BRACE)
+        return make_token(s, .RIGHT_BRACE)
     case ';':
-        return make_token(.SEMICOLON)
+        return make_token(s, .SEMICOLON)
     case ',':
-        return make_token(.COMMA)
+        return make_token(s, .COMMA)
     case '.':
-        return make_token(.DOT)
+        return make_token(s, .DOT)
     case '-':
-        return make_token(.MINUS)
+        return make_token(s, .MINUS)
     case '+':
-        return make_token(.PLUS)
+        return make_token(s, .PLUS)
     case '/':
-        return make_token(.SLASH)
+        return make_token(s, .SLASH)
     case '*':
-        return make_token(.STAR)
+        return make_token(s, .STAR)
     case '!':
-        return make_token(match('=') ? .BANG_EQUAL : .BANG)
+        return make_token(s, match(s, '=') ? .BANG_EQUAL : .BANG)
     case '=':
-        return make_token(match('=') ? .EQUAL_EQUAL : .EQUAL)
+        return make_token(s, match(s, '=') ? .EQUAL_EQUAL : .EQUAL)
     case '<':
-        return make_token(match('=') ? .LESS_EQUAL : .LESS)
+        return make_token(s, match(s, '=') ? .LESS_EQUAL : .LESS)
     case '>':
-        return make_token(match('=') ? .GREATER_EQUAL : .GREATER)
-    case '"':
-        return make_token_string()
+        return make_token(s, match(s, '=') ? .GREATER_EQUAL : .GREATER)
+    case '"': //"
+        return make_token_string(s)
 
 
     }
 
-    return error_token("Unexpected character.")
+    return error_token(s, "Unexpected character.")
 }
 
-is_at_end :: proc() -> bool {
-    return scanner.length <= scanner.current
+is_at_end :: proc(s: ^Scanner) -> bool {
+    return s.length <= s.current
 }
 
-make_token :: proc(t: TokenType) -> Token {
+make_token :: proc(s: ^Scanner, t: TokenType) -> Token {
     return Token{
         type = t,
-        source = scanner.source[scanner.start:scanner.current],
-        line = scanner.line,
+        source = s.source[s.start:s.current],
+        line = s.line,
     }
 }
 
-error_token :: proc(message: string) -> Token {
+error_token :: proc(s: ^Scanner, message: string) -> Token {
     return Token{
         type = .ERROR,
         source = message,
-        line = scanner.line,
+        line = s.line,
     }
 }
 
-make_token_string :: proc() -> Token {
-    for peek() != '"' && !is_at_end() {
-        if peek() == '\n' {
+make_token_string :: proc(s: ^Scanner) -> Token {
+    for peek(s) != '"' && !is_at_end(s) { //"
+        if peek(s) == '\n' {
             scanner.line += 1
         }
-        advance()
+        advance(s)
     }
-    if is_at_end() {
-        return error_token("Unterminated string.")
+    if is_at_end(s) {
+        return error_token(s, "Unterminated string.")
     }
-    advance()
-    return make_token(.STRING)
+    advance(s)
+    return make_token(s, .STRING)
 }
 
-make_token_number :: proc () -> Token {
-    for is_digit(peek()) {
-        advance()
+make_token_number :: proc(s: ^Scanner) -> Token {
+    for is_digit(peek(s)) {
+        advance(s)
     }
-    if peek() == '.' {
-        c, ok := peek_next()
+    if peek(s) == '.' {
+        c, ok := peek_next(s)
         if ok && is_digit(c) {
-            advance()
-            for is_digit(peek()) {
-                advance()
+            advance(s)
+            for is_digit(peek(s)) {
+                advance(s)
             }
         }
     }
-    return make_token(.NUMBER)
+    return make_token(s, .NUMBER)
 }
 
-advance :: proc() -> u8 {
-    scanner.current += 1;
-    return scanner.source[scanner.current - 1]
+advance :: proc(s: ^Scanner) -> u8 {
+    s.current += 1;
+    return s.source[s.current - 1]
 }
 
-match :: proc(expected: u8) -> bool {
-    if is_at_end() {
+match :: proc(s: ^Scanner, expected: u8) -> bool {
+    if is_at_end(s) {
         return false
     }
-    if scanner.source[scanner.current] != expected {
+    if s.source[s.current] != expected {
         return false
     }
-    scanner.current += 1
+    s.current += 1
     return true
 }

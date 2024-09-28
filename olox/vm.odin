@@ -13,26 +13,26 @@ VM :: struct {
 
 vm := VM{}
 
-reset_stack :: proc() {
+reset_stack :: proc(vm: ^VM) {
    vm.stack = 0
 }
 
-stack_push :: proc(v: Value) {
+stack_push :: proc(vm: ^VM, v: Value) {
     vm.stack[vm.stack_index] = v
     vm.stack_index += 1
 }
 
-stack_pop :: proc() -> Value {
+stack_pop :: proc(vm: ^VM) -> Value {
     vm.stack_index -= 1
     return vm.stack[vm.stack_index]
 }
 
-init_vm :: proc() {
+init_vm :: proc(vm: ^VM, ) {
     vm.ip = 0
-    reset_stack()
+    reset_stack(vm)
 }
 
-free_vm :: proc() {
+free_vm :: proc(vm: ^VM) {
 
 }
 
@@ -42,22 +42,22 @@ InterpretResult :: enum {
     INTERPRET_ERROR,
 }
 
-interpret :: proc(source: string) -> InterpretResult {
-    compile(source)
+interpret :: proc(vm: ^VM, source: string) -> InterpretResult {
+    compile(vm, source)
     return .INTERPRET_OK
 }
 
-read_byte :: proc() -> byte {
+read_byte :: proc(vm: ^VM) -> byte {
     instr := vm.chunk.code[vm.ip]
     vm.ip += 1
     return instr
 }
 
-read_constant :: proc() -> Value {
-    return vm.chunk.constants[read_byte()]
+read_constant :: proc(vm: ^VM) -> Value {
+    return vm.chunk.constants[read_byte(vm)]
 }
 
-run :: proc() -> InterpretResult {
+run :: proc(vm: ^VM) -> InterpretResult {
     for {
         when DEBUG_TRACE_EXECUTION {
             fmt.printf("Stack := ( ")
@@ -70,27 +70,27 @@ run :: proc() -> InterpretResult {
             disassemble_instruction(vm.chunk, vm.ip)
         }
 
-        instr := read_byte()
+        instr := read_byte(vm)
 
         switch instr {
         case byte(OpCode.OP_RETURN):
-            print_value(stack_pop())
+            print_value(stack_pop(vm))
             fmt.printf("\n")
             return .INTERPRET_OK
 
         case byte(OpCode.OP_NEGATE):
-            v, ok := stack_pop().(f64)
+            v, ok := stack_pop(vm).(f64)
             if !ok {
                 return .INTERPRET_ERROR
             }
-            stack_push(-v)
+            stack_push(vm, -v)
 
         case byte(OpCode.OP_CONSTANT):
-            constant := read_constant()
-            stack_push(constant)
+            constant := read_constant(vm)
+            stack_push(vm, constant)
 
         case byte(OpCode.OP_ADD):
-            b, a := stack_pop(), stack_pop()
+            b, a := stack_pop(vm), stack_pop(vm)
             b_num, b_ok := b.(f64)
             a_num, a_ok := a.(f64)
 
@@ -99,10 +99,10 @@ run :: proc() -> InterpretResult {
             }
 
             sum := a_num + b_num
-            stack_push(sum)
+            stack_push(vm, sum)
 
         case byte(OpCode.OP_SUBTRACT):
-            b, a := stack_pop(), stack_pop()
+            b, a := stack_pop(vm), stack_pop(vm)
             b_num, b_ok := b.(f64)
             a_num, a_ok := a.(f64)
 
@@ -111,10 +111,10 @@ run :: proc() -> InterpretResult {
             }
 
             subtract := a_num - b_num
-            stack_push(subtract)
+            stack_push(vm, subtract)
 
         case byte(OpCode.OP_MULTIPLY):
-            b, a := stack_pop(), stack_pop()
+            b, a := stack_pop(vm), stack_pop(vm)
             b_num, b_ok := b.(f64)
             a_num, a_ok := a.(f64)
 
@@ -123,10 +123,10 @@ run :: proc() -> InterpretResult {
             }
 
             multiply := a_num * b_num
-            stack_push(multiply)
+            stack_push(vm, multiply)
 
         case byte(OpCode.OP_DIVIDE):
-            b, a := stack_pop(), stack_pop()
+            b, a := stack_pop(vm), stack_pop(vm)
             b_num, b_ok := b.(f64)
             a_num, a_ok := a.(f64)
 
@@ -135,7 +135,7 @@ run :: proc() -> InterpretResult {
             }
 
             division := a_num / b_num
-            stack_push(division)
+            stack_push(vm, division)
         }
     } 
 }

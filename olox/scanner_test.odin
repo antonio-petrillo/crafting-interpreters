@@ -5,19 +5,19 @@ import "core:testing"
 
 @(test)
 test_scanner_token_single_or_two :: proc(t: ^testing.T) {
-
+    s := &Scanner{}
     source := "(){},.-+;/*!!====>>=<<="
     expecteds := [?]TokenType{.LEFT_PAREN, .RIGHT_PAREN, .LEFT_BRACE, .RIGHT_BRACE, .COMMA, .DOT, .MINUS, .PLUS, .SEMICOLON, .SLASH, .STAR, .BANG, .BANG_EQUAL, .EQUAL_EQUAL, .EQUAL, .GREATER, .GREATER_EQUAL, .LESS, .LESS_EQUAL}
-    init_scanner(source)
+    init_scanner(s, source)
     for expected in expecteds {
-        tok := scan_token()
+        tok := scan_token(s)
         testing.expect_value(t, tok.type, expected)
     }
 
     source_with_whitespaces := "( ) { } , . - + ; / * ! != == = > >= < <="
-    init_scanner(source_with_whitespaces)
+    init_scanner(s, source_with_whitespaces)
     for expected in expecteds {
-        tok := scan_token()
+        tok := scan_token(s)
         testing.expect_value(t, tok.type, expected)
     }
 
@@ -28,10 +28,10 @@ test_scanner_token_single_or_two :: proc(t: ^testing.T) {
             .PRINT, .RETURN, .SUPER, .THIS,
             .TRUE, .VAR, .WHILE,
     }
-    init_scanner(source_keywords)
+    init_scanner(s, source_keywords)
 
     for expected in expecteds_keywords {
-        tok := scan_token()
+        tok := scan_token(s)
         testing.expect_value(t, tok.type, expected)
     }
 
@@ -58,9 +58,9 @@ test_scanner_token_single_or_two :: proc(t: ^testing.T) {
             source = "sucuzzone",
         },
     }
-    init_scanner(identifiers_or_literals)
+    init_scanner(s, identifiers_or_literals)
     for expected in expecteds_tok {
-        tok := scan_token()
+        tok := scan_token(s)
         testing.expect_value(t, tok.type, expected.type)
         testing.expect_value(t, tok.line, expected.line)
         testing.expect_value(t, tok.source, expected.source)

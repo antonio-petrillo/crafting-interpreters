@@ -6,23 +6,24 @@ import "core:os"
 DEBUG_TRACE_EXECUTION :: true
 
 main :: proc() {
-    init_vm()
+    vm := &VM{}
+    init_vm(vm)
 
     if len(os.args) == 1 {
-        repl()
+        repl(vm)
     } else if len(os.args) == 2 {
-        run_file(os.args[1])
+        run_file(vm, os.args[1])
     } else {
         fmt.eprintf("usage: olox [path]\n")
         os.exit(64)
     }
 
-    free_vm()
+    free_vm(vm)
 }
 
 BUFFER_SIZE :: 1024
 
-repl :: proc() {
+repl :: proc(vm: ^VM) {
     buffer: [BUFFER_SIZE]byte
     for {
         fmt.printf("olox => ")
@@ -35,7 +36,7 @@ repl :: proc() {
 
         line := string(buffer[:n])
 
-        interpret(line)
+        interpret(vm, line)
     }
 }
 
@@ -48,9 +49,9 @@ read_file :: proc(path: string) -> string {
     return string(bytes)
 }
 
-run_file :: proc(path: string) {
+run_file :: proc(vm: ^VM, path: string) {
     source := read_file(path)
-    result := interpret(source)
+    result := interpret(vm, source)
 
     #partial switch result {
     case .INTERPRET_COMPILE_ERROR:

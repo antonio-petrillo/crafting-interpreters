@@ -1,5 +1,6 @@
 package main
 
-compile :: proc(source: string) {
-    init_scanner(source)
+compile :: proc(vm: ^VM, source: string) {
+    scanner := &Scanner{}
+    init_scanner(scanner, source)
 }
