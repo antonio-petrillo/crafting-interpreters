@@ -194,9 +194,8 @@ scan_token :: proc(s: ^Scanner) -> Token {
         return make_token(s, match(s, '=') ? .LESS_EQUAL : .LESS)
     case '>':
         return make_token(s, match(s, '=') ? .GREATER_EQUAL : .GREATER)
-    case '"': //"
+    case '"': //" // workaraound bug in odin-mode
         return make_token_string(s)
-
 
     }
 
@@ -224,7 +223,7 @@ error_token :: proc(s: ^Scanner, message: string) -> Token {
 }
 
 make_token_string :: proc(s: ^Scanner) -> Token {
-    for peek(s) != '"' && !is_at_end(s) { //"
+    for !is_at_end(s) && peek(s) != '"'{ //" // workaraound bug in odin-mode
         if peek(s) == '\n' {
             scanner.line += 1
         }
