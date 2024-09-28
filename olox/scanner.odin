@@ -50,7 +50,7 @@ init_scanner :: proc(s: ^Scanner, source: string) {
 }
 
 skip_whitespace :: proc(s: ^Scanner) {
-    for {
+    for !is_at_end(s) {
         switch peek(s) {
         case ' ':
             advance(s)
@@ -151,7 +151,10 @@ scan_token :: proc(s: ^Scanner) -> Token {
     skip_whitespace(s)
     s.start = s.current
     if is_at_end(s) {
-        return make_token(s, .EOF)
+        return Token{
+            line = s.line,
+            type = .EOF,
+        }
     }
 
     c := advance(s)

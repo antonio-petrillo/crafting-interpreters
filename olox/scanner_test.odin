@@ -17,7 +17,8 @@ test_scanner_token_single_or_two :: proc(t: ^testing.T) {
             .BANG, .BANG_EQUAL,
             .EQUAL_EQUAL, .EQUAL,
             .GREATER, .GREATER_EQUAL,
-            .LESS, .LESS_EQUAL
+            .LESS, .LESS_EQUAL,
+            .EOF
     }
     init_scanner(s, source)
     for expected in expecteds {
@@ -40,7 +41,8 @@ test_scanner_token_single_or_two_with_spaces :: proc(t: ^testing.T) {
             .BANG, .BANG_EQUAL,
             .EQUAL_EQUAL, .EQUAL,
             .GREATER, .GREATER_EQUAL,
-            .LESS, .LESS_EQUAL
+            .LESS, .LESS_EQUAL,
+            .EOF
     }
     init_scanner(s, source)
     for expected in expecteds {
@@ -58,6 +60,7 @@ test_scanner_keywords :: proc(t: ^testing.T) {
             .FOR, .FUN, .IF, .NIL, .OR,
             .PRINT, .RETURN, .SUPER, .THIS,
             .TRUE, .VAR, .WHILE,
+            .EOF
     }
     init_scanner(s, source)
 
@@ -91,6 +94,10 @@ test_scanner_identifiers :: proc(t: ^testing.T) {
             type = .IDENTIFIER,
             line = 1,
             source = "sucuzzone",
+        },
+        Token{
+            type = .EOF,
+            line = 1,
         },
     }
     init_scanner(s, source)
