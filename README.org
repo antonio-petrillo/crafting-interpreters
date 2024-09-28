@@ -98,3 +98,8 @@ To make it work, when I bind/resolve super I must also bind =inner= in the super
 ** Chapter 14
 So far so good, have a builtin dynamic array, testing suite and nicer syntax is almost a cheat.
 The approach used to implement dynamic array in C is to gross for me to type out.
+** Chapter 15
+Still pretty doable, maybe I can implement the OpCode for add, sub, mul, div in a better way.
+** Chapter 16
+The use of global variable to simplify the code already showed its limitations, I can't test my code properly because test are parallel, I may disable this feature, but this doesn't solve the problem.
+I may should rewrite this first 2 chapter to make the `VM` and the `Scanner` local and not global.
