@@ -1,39 +1,61 @@
 package main
 
 import "core:fmt"
+import "core:os"
 
 DEBUG_TRACE_EXECUTION :: true
 
 main :: proc() {
     init_vm()
 
-    c : Chunk = {}
-
-    init_chunk(&c)
-
-    constant := add_constant(&c, 1.2)
-    write_chunk(&c, byte(OpCode.OP_CONSTANT), 123)
-    write_chunk(&c, byte(constant), 123) // this is uint!!!
-
-    constant = add_constant(&c, 3.4);
-    write_chunk(&c, byte(OpCode.OP_CONSTANT), 123);
-    write_chunk(&c, byte(constant), 123);
-
-    write_chunk(&c, byte(OpCode.OP_ADD), 123);
-
-    constant = add_constant(&c, 5.6);
-    write_chunk(&c, byte(OpCode.OP_CONSTANT), 123);
-    write_chunk(&c, byte(constant), 123);
-
-    write_chunk(&c, byte(OpCode.OP_DIVIDE), 123);
-
-    write_chunk(&c, byte(OpCode.OP_NEGATE), 123) // this is uint!!!
-
-    write_chunk(&c, byte(OpCode.OP_RETURN), 124)
-
-    interpret(&c)
+    if len(os.args) == 1 {
+        repl()
+    } else if len(os.args) == 2 {
+        run_file(os.args[1])
+    } else {
+        fmt.eprintf("usage: olox [path]\n")
+        os.exit(64)
+    }
 
     free_vm()
-    free_chunk(&c)
+}
 
+BUFFER_SIZE :: 1024
+
+repl :: proc() {
+    buffer: [BUFFER_SIZE]byte
+    for {
+        fmt.printf("olox => ")
+
+        n, err := os.read(os.stdin, buffer[:])
+        if err != os.ERROR_NONE {
+            fmt.printf("** ERROR READING LINE **\n")
+            continue
+        }
+
+        line := string(buffer[:n])
+
+        interpret(line)
+    }
+}
+
+read_file :: proc(path: string) -> string {
+    bytes, ok := os.read_entire_file_from_filename(path)
+    if !ok {
+        fmt.eprintf("Could not open|read file \"%s\". \n", path)
+        os.exit(74)
+    }
+    return string(bytes)
+}
+
+run_file :: proc(path: string) {
+    source := read_file(path)
+    result := interpret(source)
+
+    #partial switch result {
+    case .INTERPRET_COMPILE_ERROR:
+        os.exit(65)
+    case .INTERPRET_ERROR:
+        os.exit(70)
+    }
 }

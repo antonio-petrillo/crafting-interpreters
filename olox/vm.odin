@@ -42,9 +42,9 @@ InterpretResult :: enum {
     INTERPRET_ERROR,
 }
 
-interpret :: proc(c: ^Chunk) -> InterpretResult {
-    vm.chunk = c
-    return run()
+interpret :: proc(source: string) -> InterpretResult {
+    compile(source)
+    return .INTERPRET_OK
 }
 
 read_byte :: proc() -> byte {
