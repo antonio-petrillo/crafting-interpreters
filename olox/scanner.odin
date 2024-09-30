@@ -53,17 +53,17 @@ skip_whitespace :: proc(s: ^Scanner) {
     for !is_at_end(s) {
         switch peek(s) {
         case ' ':
-            advance(s)
+            advance_scanner(s)
         case '\t':
-            advance(s)
+            advance_scanner(s)
         case '\n':
             scanner.line += 1
-            advance(s)
+            advance_scanner(s)
         case '/':
             c, ok := peek_next(s)
             if ok && c == '/' {
                 for peek(s) != '\n' && !is_at_end(s) {
-                    advance(s)
+                    advance_scanner(s)
                 }
             } else {
                 return
@@ -95,7 +95,7 @@ is_alpha :: proc(c: u8) -> bool {
 
 make_token_identifier :: proc(s: ^Scanner) -> Token {
     for !is_at_end(s) && (is_alpha(peek(s)) || is_digit(peek(s))) {
-        advance(s)
+        advance_scanner(s)
     }
     return make_token(s, identifier_type(s))
 }
@@ -157,7 +157,7 @@ scan_token :: proc(s: ^Scanner) -> Token {
         }
     }
 
-    c := advance(s)
+    c := advance_scanner(s)
     if is_digit(c) {
         return make_token_number(s)
     }
@@ -230,32 +230,32 @@ make_token_string :: proc(s: ^Scanner) -> Token {
         if peek(s) == '\n' {
             scanner.line += 1
         }
-        advance(s)
+        advance_scanner(s)
     }
     if is_at_end(s) {
         return error_token(s, "Unterminated string.")
     }
-    advance(s)
+    advance_scanner(s)
     return make_token(s, .STRING)
 }
 
 make_token_number :: proc(s: ^Scanner) -> Token {
     for is_digit(peek(s)) {
-        advance(s)
+        advance_scanner(s)
     }
     if peek(s) == '.' {
         c, ok := peek_next(s)
         if ok && is_digit(c) {
-            advance(s)
+            advance_scanner(s)
             for is_digit(peek(s)) {
-                advance(s)
+                advance_scanner(s)
             }
         }
     }
     return make_token(s, .NUMBER)
 }
 
-advance :: proc(s: ^Scanner) -> u8 {
+advance_scanner :: proc(s: ^Scanner) -> u8 {
     s.current += 1;
     return s.source[s.current - 1]
 }
