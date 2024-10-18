@@ -43,21 +43,8 @@ InterpretResult :: enum {
 }
 
 interpret :: proc(vm: ^VM, source: string) -> InterpretResult {
-    c := &Chunk{}
-    init_chunk(c)
-
-    if !compile(vm, source, c) {
-        free_chunk(c)
-        return .INTERPRET_COMPILE_ERROR
-    }
-
-    vm.chunk = c
-    vm.ip = 0
-
-    result := run(vm)
-
-    free_chunk(c)
-    return result
+    compile(vm, source)
+    return .INTERPRET_OK
 }
 
 read_byte :: proc(vm: ^VM) -> byte {
