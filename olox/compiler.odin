@@ -34,7 +34,7 @@ ParseRule :: struct {
     precedence: Precedence,
 }
 
-compile :: proc(vm: ^VM, source: string, c: ^Chunk) -> bool {
+compile :: proc(source: string, c: ^Chunk) -> bool {
     scanner := &Scanner{}
     init_scanner(scanner, source)
 
@@ -55,7 +55,11 @@ expression :: proc(parser: ^Parser) {
 }
 
 number :: proc(parser: ^Parser) {
-    value := strconv.atof(parser.previous.source)
+    value, ok := strconv.parse_f64(parser.previous.source)
+    if !ok {
+        error_at_current(parser, "Input is not a valid number")
+        return
+    }
 
     emit_constant(parser, value)
 }

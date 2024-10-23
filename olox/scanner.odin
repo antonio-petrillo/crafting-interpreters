@@ -240,14 +240,14 @@ make_token_string :: proc(s: ^Scanner) -> Token {
 }
 
 make_token_number :: proc(s: ^Scanner) -> Token {
-    for is_digit(peek(s)) {
+    for !is_at_end(s) && is_digit(peek(s)) {
         advance_scanner(s)
     }
-    if peek(s) == '.' {
+    if !is_at_end(s) && peek(s) == '.' {
         c, ok := peek_next(s)
         if ok && is_digit(c) {
             advance_scanner(s)
-            for is_digit(peek(s)) {
+            for !is_at_end(s) && is_digit(peek(s)) {
                 advance_scanner(s)
             }
         }

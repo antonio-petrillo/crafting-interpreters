@@ -71,6 +71,57 @@ test_scanner_keywords :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_scanner_single_negative_number :: proc(t: ^testing.T) {
+    s := &Scanner{}
+    source := "-12323"
+    init_scanner(s, source)
+
+
+    expected_1 := Token{
+        type = .MINUS,
+        line = 1,
+        source = "-"
+    }
+    expected_2 := Token{
+        type = .NUMBER,
+        line = 1,
+        source = "12323"
+    }
+
+    tok := scan_token(s)
+
+    testing.expect_value(t, tok.type, expected_1.type)
+    testing.expect_value(t, tok.line, expected_1.line)
+    testing.expect_value(t, tok.source, expected_1.source)
+
+    tok = scan_token(s)
+
+    testing.expect_value(t, tok.type, expected_2.type)
+    testing.expect_value(t, tok.line, expected_2.line)
+    testing.expect_value(t, tok.source, expected_2.source)
+}
+
+@(test)
+test_scanner_single_number :: proc(t: ^testing.T) {
+    s := &Scanner{}
+    source := "12323"
+    init_scanner(s, source)
+
+
+    expected := Token{
+        type = .NUMBER,
+        line = 1,
+        source = "12323"
+    }
+
+    tok := scan_token(s)
+
+    testing.expect_value(t, tok.type, expected.type)
+    testing.expect_value(t, tok.line, expected.line)
+    testing.expect_value(t, tok.source, expected.source)
+}
+
+@(test)
 test_scanner_identifiers :: proc(t: ^testing.T) {
     s := &Scanner{}
     source := "12323 123.12341324 \"sdfasdfasdfad\" sucuzzone"

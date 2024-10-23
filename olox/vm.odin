@@ -47,7 +47,7 @@ interpret :: proc(vm: ^VM, source: string) -> InterpretResult {
     chunk := Chunk{}
     init_chunk(&chunk)
 
-    if !compile(vm, source, &chunk) {
+    if !compile(source, &chunk) {
         free_chunk(&chunk)
         return .INTERPRET_COMPILE_ERROR
     }
