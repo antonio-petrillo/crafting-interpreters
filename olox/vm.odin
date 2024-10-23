@@ -43,8 +43,22 @@ InterpretResult :: enum {
 }
 
 interpret :: proc(vm: ^VM, source: string) -> InterpretResult {
-    compile(vm, source)
-    return .INTERPRET_OK
+
+    chunk := Chunk{}
+    init_chunk(&chunk)
+
+    if !compile(vm, source, &chunk) {
+        free_chunk(&chunk)
+        return .INTERPRET_COMPILE_ERROR
+    }
+
+    vm.chunk = &chunk
+    /* vm.ip = uint(vm.chunk.code) */
+    vm.ip = 0 // TODO: understand the shitty code in the book (too risky with this pointers!)
+
+    result := run(vm)
+    free_chunk(&chunk)
+    return result
 }
 
 read_byte :: proc(vm: ^VM) -> byte {

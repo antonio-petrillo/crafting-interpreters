@@ -20,9 +20,9 @@ init_chunk :: proc(c: ^Chunk) {
 
 }
 
-write_chunk :: proc(c: ^Chunk, b: byte, l: uint) {
+write_chunk :: proc(c: ^Chunk, b: byte, line: uint) {
     append(&c.code, b)
-    append(&c.lines, l)
+    append(&c.lines, line)
 }
 
 free_chunk :: proc(c: ^Chunk) {
