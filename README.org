@@ -103,3 +103,10 @@ Still pretty doable, maybe I can implement the OpCode for add, sub, mul, div in 
 ** Chapter 16
 The use of global variable to simplify the code already showed its limitations, I can't test my code properly because test are parallel, I may disable this feature, but this doesn't solve the problem.
 I may should rewrite this first 2 chapter to make the `VM` and the `Scanner` local and not global.
+** Chapter 17
+*** Exercise 1
+
+*** Exercise 2
+`(` used as prefix for *grouping* and *infix* for calling (functions or methods)
+*** Exercise 3
+Add a field `parseMixfix` into the `ParseRule` struct and then parse and produce the bytecode accordingly.
