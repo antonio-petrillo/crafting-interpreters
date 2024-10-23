@@ -12,7 +12,7 @@ OpCode :: enum byte {
 
 Chunk :: struct {
     code: [dynamic]byte,
-    constants: [dynamic]Value,
+    constants: [dynamic]Value, // assume max lenght of this is 256
     lines: [dynamic]uint,
 }
 
@@ -31,7 +31,7 @@ free_chunk :: proc(c: ^Chunk) {
     delete(c.lines)
 }
 
-add_constant :: proc(c: ^Chunk, v: Value) -> uint {
+add_constant :: proc(c: ^Chunk, v: Value) -> byte {
     append(&c.constants, v)
-    return len(&c.constants) - 1
+    return byte(len(&c.constants) - 1) // see precondition/assumption on constants
 }

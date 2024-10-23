@@ -1,17 +1,17 @@
 package main
 
 Scanner :: struct {
-    start: int,
-    current: int,
-    line: int,
+    start: uint,
+    current: uint,
+    line: uint,
     source: string,
-    length: int,
+    length: uint,
 }
 
 Token :: struct {
     type: TokenType,
     source: string,
-    line: int,
+    line: uint,
 }
 
 TokenType :: enum {
@@ -142,7 +142,7 @@ identifier_type :: proc(s: ^Scanner) -> TokenType {
 
 }
 
-check_keyword :: proc(s: ^Scanner, length: int, rest: string, on_match: TokenType) -> TokenType {
+check_keyword :: proc(s: ^Scanner, length: uint, rest: string, on_match: TokenType) -> TokenType {
     src := s.source[s.start:s.start + length]
     return src == rest ? on_match : .IDENTIFIER
 }
