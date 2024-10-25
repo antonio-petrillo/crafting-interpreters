@@ -81,6 +81,7 @@ unary :: proc(parser: ^Parser) {
     case:
         return
     }
+
 }
 
 make_constant :: proc(parser: ^Parser, value: Value) -> byte {
