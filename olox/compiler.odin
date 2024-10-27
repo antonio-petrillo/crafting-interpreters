@@ -83,10 +83,9 @@ grouping :: proc(parser: ^Parser) {
 }
 
 unary :: proc(parser: ^Parser) {
-    parse_precedence(parser, .UNARY)
     operator_type := parser.previous.type
 
-    expression(parser)
+    parse_precedence(parser, .UNARY)
 
     #partial switch operator_type {
     case .MINUS:
