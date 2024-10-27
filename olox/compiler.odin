@@ -54,6 +54,19 @@ expression :: proc(parser: ^Parser) {
     parse_precedence(parser, .ASSIGNMENT)
 }
 
+literal :: proc(parser: ^Parser) {
+    #partial switch parser.previous.type {
+        case .FALSE:
+        emit_byte(parser, byte(OpCode.OP_FALSE))
+        case .TRUE:
+        emit_byte(parser, byte(OpCode.OP_TRUE))
+        case .NIL:
+        emit_byte(parser, byte(OpCode.OP_NIL))
+        case:
+        return
+    }
+}
+
 number :: proc(parser: ^Parser) {
     value, ok := strconv.parse_f64(parser.previous.source)
     if !ok {
@@ -78,6 +91,8 @@ unary :: proc(parser: ^Parser) {
     #partial switch operator_type {
     case .MINUS:
         emit_byte(parser, byte(OpCode.OP_NEGATE))
+    case .BANG:
+        emit_byte(parser, byte(OpCode.OP_NOT))
     case:
         return
     }
@@ -192,9 +207,6 @@ parse_precedence :: proc(parser: ^Parser, precedence: Precedence) {
         infix_rule := get_rule(parser.previous.type).infix
         infix_rule(parser)
     }
-
-
-
 }
 
 binary :: proc(parser: ^Parser) {
@@ -212,6 +224,18 @@ binary :: proc(parser: ^Parser) {
         emit_byte(parser, byte(OpCode.OP_MULTIPLY))
     case .SLASH:
         emit_byte(parser, byte(OpCode.OP_DIVIDE))
+    case .BANG_EQUAL:
+        emit_bytes(parser, byte(OpCode.OP_EQUAL), byte(OpCode.OP_NOT))
+    case .EQUAL_EQUAL:
+        emit_byte(parser, byte(OpCode.OP_EQUAL))
+    case .GREATER:
+        emit_byte(parser, byte(OpCode.OP_GREATER))
+    case .GREATER_EQUAL:
+        emit_bytes(parser, byte(OpCode.OP_LESS), byte(OpCode.OP_NOT))
+    case .LESS:
+        emit_byte(parser, byte(OpCode.OP_LESS))
+    case .LESS_EQUAL:
+        emit_bytes(parser, byte(OpCode.OP_GREATER), byte(OpCode.OP_NOT))
     case:
         return
     }
@@ -229,31 +253,31 @@ rules := [TokenType]ParseRule{
         .SEMICOLON     = { prefix=nil,      infix=nil,    precedence=.NONE},
         .SLASH         = { prefix=nil,      infix=binary, precedence=.FACTOR},
         .STAR          = { prefix=nil,      infix=binary, precedence=.FACTOR },
-        .BANG          = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .BANG_EQUAL    = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .EQUAL         = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .EQUAL_EQUAL   = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .GREATER       = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .GREATER_EQUAL = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .LESS          = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .LESS_EQUAL    = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .IDENTIFIER    = { prefix=nil,      infix=nil,    precedence=.NONE },
+        .BANG          = { prefix=unary,    infix=nil,    precedence=.NONE },
+        .BANG_EQUAL    = { prefix=nil,      infix=binary, precedence=.EQUALITY },
+        .EQUAL         = { prefix=nil,      infix=binary, precedence=.NONE },
+        .EQUAL_EQUAL   = { prefix=nil,      infix=binary, precedence=.EQUALITY },
+        .GREATER       = { prefix=nil,      infix=binary, precedence=.COMPARISON },
+        .GREATER_EQUAL = { prefix=nil,      infix=binary, precedence=.COMPARISON },
+        .LESS          = { prefix=nil,      infix=binary, precedence=.COMPARISON },
+        .LESS_EQUAL    = { prefix=nil,      infix=binary, precedence=.COMPARISON },
+        .IDENTIFIER    = { prefix=nil,      infix=nil,     precedence=.NONE },
         .STRING        = { prefix=nil,      infix=nil,    precedence=.NONE },
         .NUMBER        = { prefix=number,   infix=nil,    precedence=.NONE },
         .AND           = { prefix=nil,      infix=nil,    precedence=.NONE },
         .CLASS         = { prefix=nil,      infix=nil,    precedence=.NONE },
         .ELSE          = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .FALSE         = { prefix=nil,      infix=nil,    precedence=.NONE },
+        .FALSE         = { prefix=literal,  infix=nil,    precedence=.NONE },
         .FOR           = { prefix=nil,      infix=nil,    precedence=.NONE },
         .FUN           = { prefix=nil,      infix=nil,    precedence=.NONE },
         .IF            = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .NIL           = { prefix=nil,      infix=nil,    precedence=.NONE },
+        .NIL           = { prefix=literal,  infix=nil,    precedence=.NONE },
         .OR            = { prefix=nil,      infix=nil,    precedence=.NONE },
         .PRINT         = { prefix=nil,      infix=nil,    precedence=.NONE },
         .RETURN        = { prefix=nil,      infix=nil,    precedence=.NONE },
         .SUPER         = { prefix=nil,      infix=nil,    precedence=.NONE },
         .THIS          = { prefix=nil,      infix=nil,    precedence=.NONE },
-        .TRUE          = { prefix=nil,      infix=nil,    precedence=.NONE },
+        .TRUE          = { prefix=literal,  infix=nil,    precedence=.NONE },
         .VAR           = { prefix=nil,      infix=nil,    precedence=.NONE },
         .WHILE         = { prefix=nil,      infix=nil,    precedence=.NONE },
         .ERROR         = { prefix=nil,      infix=nil,    precedence=.NONE },

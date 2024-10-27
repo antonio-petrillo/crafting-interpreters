@@ -30,6 +30,15 @@ disassemble_instruction :: proc(c: ^Chunk, offset: uint) -> uint {
     case byte(OpCode.OP_NEGATE):
         return simple_instruction("OP_NEGATE", offset)
 
+    case byte(OpCode.OP_EQUAL):
+        return simple_instruction("OP_EQUAL", offset)
+
+    case byte(OpCode.OP_GREATER):
+        return simple_instruction("OP_GREATER", offset)
+
+    case byte(OpCode.OP_LESS):
+        return simple_instruction("OP_LESS", offset)
+
     case byte(OpCode.OP_ADD):
         return simple_instruction("OP_ADD", offset)
 
@@ -41,6 +50,18 @@ disassemble_instruction :: proc(c: ^Chunk, offset: uint) -> uint {
 
     case byte(OpCode.OP_DIVIDE):
         return simple_instruction("OP_DIVIDE", offset)
+
+    case byte(OpCode.OP_NIL):
+        return simple_instruction("OP_NIL", offset)
+
+    case byte(OpCode.OP_FALSE):
+        return simple_instruction("OP_FALSE", offset)
+
+    case byte(OpCode.OP_TRUE):
+        return simple_instruction("OP_TRUE", offset)
+
+    case byte(OpCode.OP_NOT):
+        return simple_instruction("OP_NOT", offset)
 
     case:
         fmt.printf("Unknown opcode %d\n", instruction)

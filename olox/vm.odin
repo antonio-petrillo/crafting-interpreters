@@ -27,6 +27,10 @@ stack_pop :: proc(vm: ^VM) -> Value {
     return vm.stack[vm.stack_index]
 }
 
+stack_peek :: proc(vm: ^VM) -> Value {
+    return vm.stack[vm.stack_index - 1]
+}
+
 init_vm :: proc(vm: ^VM, ) {
     vm.ip = 0
     reset_stack(vm)
@@ -87,14 +91,32 @@ run :: proc(vm: ^VM) -> InterpretResult {
         instr := read_byte(vm)
 
         switch instr {
+        case byte(OpCode.OP_NIL):
+            stack_push(vm, LoxNilValue)
+        case byte(OpCode.OP_TRUE):
+            stack_push(vm, true)
+        case byte(OpCode.OP_FALSE):
+            stack_push(vm, false)
         case byte(OpCode.OP_RETURN):
             print_value(stack_pop(vm))
             fmt.printf("\n")
             return .INTERPRET_OK
 
+        case byte(OpCode.OP_EQUAL):
+            v1, v2 := stack_pop(vm), stack_pop(vm)
+            are_equals := values_equal(v1, v2)
+            stack_push(vm, are_equals)
+
+        case byte(OpCode.OP_NOT):
+            v, ok := stack_pop(vm).(bool)
+            _, is_nil := stack_pop(vm).(LoxNil)
+            b := ok ? !v : false;
+            stack_push(vm, is_nil ? true : b)
+
         case byte(OpCode.OP_NEGATE):
             v, ok := stack_pop(vm).(f64)
             if !ok {
+                runtime_error(vm, "Operand must be a number")
                 return .INTERPRET_ERROR
             }
             stack_push(vm, -v)
@@ -103,12 +125,42 @@ run :: proc(vm: ^VM) -> InterpretResult {
             constant := read_constant(vm)
             stack_push(vm, constant)
 
+        case byte(OpCode.OP_LESS):
+            b, a := stack_pop(vm), stack_pop(vm)
+            b_num, b_ok := b.(f64)
+            a_num, a_ok := a.(f64)
+
+            if !b_ok || !a_ok {
+                runtime_error(vm, "Operands must be a number")
+                reset_stack(vm)
+                return .INTERPRET_ERROR
+            }
+
+            less := a_num < b_num
+            stack_push(vm, less)
+
+        case byte(OpCode.OP_GREATER):
+            b, a := stack_pop(vm), stack_pop(vm)
+            b_num, b_ok := b.(f64)
+            a_num, a_ok := a.(f64)
+
+            if !b_ok || !a_ok {
+                runtime_error(vm, "Operands must be a number")
+                reset_stack(vm)
+                return .INTERPRET_ERROR
+            }
+
+            greater := a_num > b_num
+            stack_push(vm, greater)
+
         case byte(OpCode.OP_ADD):
             b, a := stack_pop(vm), stack_pop(vm)
             b_num, b_ok := b.(f64)
             a_num, a_ok := a.(f64)
 
             if !b_ok || !a_ok {
+                runtime_error(vm, "Operands must be a number")
+                reset_stack(vm)
                 return .INTERPRET_ERROR
             }
 
@@ -121,6 +173,8 @@ run :: proc(vm: ^VM) -> InterpretResult {
             a_num, a_ok := a.(f64)
 
             if !b_ok || !a_ok {
+                runtime_error(vm, "Operands must be a number")
+                reset_stack(vm)
                 return .INTERPRET_ERROR
             }
 
@@ -133,6 +187,8 @@ run :: proc(vm: ^VM) -> InterpretResult {
             a_num, a_ok := a.(f64)
 
             if !b_ok || !a_ok {
+                runtime_error(vm, "Operands must be a number")
+                reset_stack(vm)
                 return .INTERPRET_ERROR
             }
 
@@ -145,6 +201,14 @@ run :: proc(vm: ^VM) -> InterpretResult {
             a_num, a_ok := a.(f64)
 
             if !b_ok || !a_ok {
+                runtime_error(vm, "Operands must be a number")
+                reset_stack(vm)
+                return .INTERPRET_ERROR
+            }
+
+            if b_num == 0 {
+                runtime_error(vm, "Cannot divide by 0")
+                reset_stack(vm)
                 return .INTERPRET_ERROR
             }
 
@@ -152,4 +216,11 @@ run :: proc(vm: ^VM) -> InterpretResult {
             stack_push(vm, division)
         }
     } 
+}
+
+runtime_error :: proc(vm: ^VM, format: string,  args: ..any) {
+    fmt.eprintf("\n")
+    fmt.eprintf(format, ..args)
+    fmt.eprintf(" at [line %d] in script\n", vm.chunk.lines[len(vm.chunk.lines) - 1])
+    reset_stack(vm)
 }

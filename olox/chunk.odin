@@ -8,6 +8,13 @@ OpCode :: enum byte {
     OP_DIVIDE,
     OP_NEGATE,
     OP_RETURN,
+    OP_NIL,
+    OP_TRUE,
+    OP_FALSE,
+    OP_NOT,
+    OP_EQUAL,
+    OP_GREATER,
+    OP_LESS,
 }
 
 Chunk :: struct {
