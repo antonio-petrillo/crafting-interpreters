@@ -1,6 +1,8 @@
 package main
 
 import "core:fmt"
+import "core:strings"
+import "base:runtime"
 
 STACK_SIZE :: 256
 
@@ -155,17 +157,27 @@ run :: proc(vm: ^VM) -> InterpretResult {
 
         case byte(OpCode.OP_ADD):
             b, a := stack_pop(vm), stack_pop(vm)
-            b_num, b_ok := b.(f64)
-            a_num, a_ok := a.(f64)
 
-            if !b_ok || !a_ok {
-                runtime_error(vm, "Operands must be a number")
+            if type_of(a) != type_of(b) {
+                runtime_error(vm, "Operands must have the same type")
                 reset_stack(vm)
                 return .INTERPRET_ERROR
             }
 
-            sum := a_num + b_num
-            stack_push(vm, sum)
+            #partial switch v in a {
+            case f64:
+                sum := v + b.(f64)
+                stack_push(vm, sum)
+            case ^ObjString:
+                concatenated, alloc_err := new(ObjString)
+                if alloc_err != runtime.Allocator_Error.None {
+                    runtime_error(vm, "[Allocation failed] String concatenation error")
+                    reset_stack(vm)
+                    return .INTERPRET_ERROR
+                }
+                concatenated.str = strings.concatenate([]string{v.str, b.(^ObjString).str})
+                stack_push(vm, concatenated)
+            }
 
         case byte(OpCode.OP_SUBTRACT):
             b, a := stack_pop(vm), stack_pop(vm)

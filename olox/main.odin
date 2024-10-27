@@ -3,6 +3,8 @@ package main
 import "core:fmt"
 import "core:os"
 
+// TODO: 19.5 freeing objects
+
 DEBUG_TRACE_EXECUTION :: true
 DEBUG_PRINT_CODE :: true
 

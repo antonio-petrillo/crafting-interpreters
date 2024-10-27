@@ -109,3 +109,12 @@ test_compiler_less_equal_expr :: proc(t: ^testing.T) {
     testing.expect_value(t, chunk.code[5], byte(OpCode.OP_NOT))
     free_chunk(chunk)
 }
+
+@(test)
+test_compiler_string :: proc(t: ^testing.T) {
+    source := "\"asdfasdfa\""
+    chunk := &Chunk{}
+    testing.expect_value(t, compile(source, chunk), true)
+    testing.expect_value(t, chunk.code[0], byte(OpCode.OP_CONSTANT))
+    free_chunk(chunk)
+}

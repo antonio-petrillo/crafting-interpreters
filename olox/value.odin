@@ -6,6 +6,7 @@ Value :: union {
     f64, // number
     LoxNil,
     bool,
+    ^ObjString
 }
 
 LoxNil :: #type struct{}
@@ -16,6 +17,7 @@ ValueType :: distinct enum u8 {
     BOOL,
     NIL,
     NUMBER,
+    OBJ_STR,
 }
 
 print_value :: proc(value: Value) {
@@ -24,6 +26,8 @@ print_value :: proc(value: Value) {
         fmt.printf("%f", v)
     case bool:
         fmt.printf("%t", v)
+    case ^ObjString:
+        fmt.printf("%s", v.str)
     case LoxNil:
         fmt.printf("nil")
     }
@@ -38,6 +42,8 @@ values_equal :: proc(a, b: Value) -> bool {
         return a == b.(bool)
     case f64:
         return a == b.(f64)
+    case ^ObjString:
+        return v.str == b.(^ObjString).str
     case LoxNil:
         return true
     case:

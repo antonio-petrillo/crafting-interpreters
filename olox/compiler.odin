@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:strconv"
+import "base:runtime"
 
 Parser :: struct {
     current:         Token,
@@ -65,6 +66,19 @@ literal :: proc(parser: ^Parser) {
         case:
         return
     }
+}
+
+// string is reserved keyword
+// note that str_obj must be freed elsewhere
+str :: proc(parser: ^Parser) {
+    str_obj, alloc_err := new(ObjString)
+    if alloc_err != runtime.Allocator_Error.None {
+        error_at_current(parser, "Can't allocate constant, not enough memory")
+        return
+    }
+
+    str_obj.str = parser.previous.source[1:len(parser.previous.source)-1] // note: string tokens are quoted
+    emit_constant(parser, str_obj)
 }
 
 number :: proc(parser: ^Parser) {
@@ -261,7 +275,7 @@ rules := [TokenType]ParseRule{
         .LESS          = { prefix=nil,      infix=binary, precedence=.COMPARISON },
         .LESS_EQUAL    = { prefix=nil,      infix=binary, precedence=.COMPARISON },
         .IDENTIFIER    = { prefix=nil,      infix=nil,     precedence=.NONE },
-        .STRING        = { prefix=nil,      infix=nil,    precedence=.NONE },
+        .STRING        = { prefix=str,      infix=nil,    precedence=.NONE },
         .NUMBER        = { prefix=number,   infix=nil,    precedence=.NONE },
         .AND           = { prefix=nil,      infix=nil,    precedence=.NONE },
         .CLASS         = { prefix=nil,      infix=nil,    precedence=.NONE },
