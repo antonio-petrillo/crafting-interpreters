@@ -27,7 +27,7 @@ print_value :: proc(value: Value) {
     case bool:
         fmt.printf("%t", v)
     case ^ObjString:
-        fmt.printf("%s", v.str)
+        fmt.printf("%q", v.str)
     case LoxNil:
         fmt.printf("nil")
     }

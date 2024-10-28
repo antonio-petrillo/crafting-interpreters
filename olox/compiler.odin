@@ -11,6 +11,7 @@ Parser :: struct {
     panic_mode:      bool,
     scanner:         ^Scanner,
     compiling_chunk: ^Chunk,
+    vm: ^VM,
 }
 
 Precedence :: enum u8 {
@@ -35,13 +36,14 @@ ParseRule :: struct {
     precedence: Precedence,
 }
 
-compile :: proc(source: string, c: ^Chunk) -> bool {
+compile :: proc(source: string, c: ^Chunk, vm: ^VM) -> bool {
     scanner := &Scanner{}
     init_scanner(scanner, source)
 
     parser := &Parser{}
     parser.scanner = scanner
     parser.compiling_chunk = c
+    parser.vm = vm
 
     advance_compiler(parser)
     expression(parser)
@@ -78,6 +80,8 @@ str :: proc(parser: ^Parser) {
     }
 
     str_obj.str = parser.previous.source[1:len(parser.previous.source)-1] // note: string tokens are quoted
+    str_obj.next = parser.vm.objects
+    parser.vm.objects = str_obj
     emit_constant(parser, str_obj)
 }
 

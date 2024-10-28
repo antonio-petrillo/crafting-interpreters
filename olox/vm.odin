@@ -11,6 +11,7 @@ VM :: struct {
     ip: uint,
     stack: [STACK_SIZE]Value,
     stack_index: byte,
+    objects: ^Obj,
 }
 
 vm := VM{}
@@ -33,13 +34,20 @@ stack_peek :: proc(vm: ^VM) -> Value {
     return vm.stack[vm.stack_index - 1]
 }
 
-init_vm :: proc(vm: ^VM, ) {
+init_vm :: proc(vm: ^VM) {
     vm.ip = 0
     reset_stack(vm)
 }
 
 free_vm :: proc(vm: ^VM) {
-
+    for vm.objects != nil {
+        tmp := vm.objects
+        vm.objects = vm.objects.next
+        free(tmp)
+    }
+    if vm.objects != nil {
+        free(vm.objects)
+    }
 }
 
 InterpretResult :: enum {
@@ -53,7 +61,7 @@ interpret :: proc(vm: ^VM, source: string) -> InterpretResult {
     chunk := Chunk{}
     init_chunk(&chunk)
 
-    if !compile(source, &chunk) {
+    if !compile(source, &chunk, vm) {
         free_chunk(&chunk)
         return .INTERPRET_COMPILE_ERROR
     }
@@ -159,23 +167,32 @@ run :: proc(vm: ^VM) -> InterpretResult {
             b, a := stack_pop(vm), stack_pop(vm)
 
             if type_of(a) != type_of(b) {
-                runtime_error(vm, "Operands must have the same type")
-                reset_stack(vm)
-                return .INTERPRET_ERROR
+                runtime_type_error(vm, "Operands must have the same type")
             }
 
             #partial switch v in a {
             case f64:
-                sum := v + b.(f64)
+                b_num, ok := b.(f64)
+                if !ok {
+                    runtime_type_error(vm, "First operand is number but second is not")
+                }
+                sum := v + b_num
                 stack_push(vm, sum)
             case ^ObjString:
+                b_obj, ok := b.(^ObjString)
+                if !ok {
+                    runtime_type_error(vm, "First operand is string but second is not")
+                }
+
                 concatenated, alloc_err := new(ObjString)
                 if alloc_err != runtime.Allocator_Error.None {
                     runtime_error(vm, "[Allocation failed] String concatenation error")
                     reset_stack(vm)
                     return .INTERPRET_ERROR
                 }
-                concatenated.str = strings.concatenate([]string{v.str, b.(^ObjString).str})
+                concatenated.str = strings.concatenate([]string{v.str, b_obj.str})
+                concatenated.next = vm.objects
+                vm.objects = concatenated
                 stack_push(vm, concatenated)
             }
 
@@ -228,6 +245,11 @@ run :: proc(vm: ^VM) -> InterpretResult {
             stack_push(vm, division)
         }
     } 
+}
+
+runtime_type_error :: proc(vm: ^VM, format: string, args: ..any) -> InterpretResult {
+    runtime_error(vm, "Operands must have the same type")
+    return .INTERPRET_ERROR
 }
 
 runtime_error :: proc(vm: ^VM, format: string,  args: ..any) {

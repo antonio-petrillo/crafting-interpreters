@@ -1,6 +1,7 @@
 package main
 
 Obj :: struct {
+    next: ^Obj,
 }
 
 ObjString :: struct {
