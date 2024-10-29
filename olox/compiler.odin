@@ -73,15 +73,12 @@ literal :: proc(parser: ^Parser) {
 // string is reserved keyword
 // note that str_obj must be freed elsewhere
 str :: proc(parser: ^Parser) {
-    str_obj, alloc_err := new(ObjString)
+    str_obj, alloc_err := allocate_string(parser.previous.source[1:len(parser.previous.source)-1], parser.vm)
     if alloc_err != runtime.Allocator_Error.None {
         error_at_current(parser, "Can't allocate constant, not enough memory")
         return
     }
 
-    str_obj.str = parser.previous.source[1:len(parser.previous.source)-1] // note: string tokens are quoted
-    str_obj.next = parser.vm.objects
-    parser.vm.objects = str_obj
     emit_constant(parser, str_obj)
 }
 

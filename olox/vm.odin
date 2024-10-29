@@ -184,15 +184,12 @@ run :: proc(vm: ^VM) -> InterpretResult {
                     runtime_type_error(vm, "First operand is string but second is not")
                 }
 
-                concatenated, alloc_err := new(ObjString)
+                concatenated, alloc_err := allocate_string(strings.concatenate([]string{v.str, b_obj.str}), vm)
                 if alloc_err != runtime.Allocator_Error.None {
                     runtime_error(vm, "[Allocation failed] String concatenation error")
                     reset_stack(vm)
                     return .INTERPRET_ERROR
                 }
-                concatenated.str = strings.concatenate([]string{v.str, b_obj.str})
-                concatenated.next = vm.objects
-                vm.objects = concatenated
                 stack_push(vm, concatenated)
             }
 
