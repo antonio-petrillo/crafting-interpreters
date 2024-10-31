@@ -184,7 +184,6 @@ literal :: proc(parser: ^Parser) {
 // string is reserved keyword
 // note that str_obj must be freed elsewhere
 str :: proc(parser: ^Parser) {
-    /* str_obj, alloc_err := allocate_string(parser.previous.source[1:len(parser.previous.source)-1], parser.vm) */
     str_obj, alloc_err := allocate_string(parser.previous.source, parser.vm)
     if alloc_err != runtime.Allocator_Error.None {
         error_at_current(parser, "Can't allocate constant, not enough memory")
@@ -200,7 +199,12 @@ variable :: proc(parser: ^Parser) {
 
 named_variable :: proc(parser: ^Parser, tok: Token) {
     arg := identifier_constant(parser, tok)
-    emit_bytes(parser, byte(OpCode.OP_GET_GLOBAL), arg)
+    if (match_token(parser, TokenType.EQUAL)) {
+        expression(parser)
+        emit_bytes(parser, byte(OpCode.OP_SET_GLOBAL), arg)
+    } else {
+        emit_bytes(parser, byte(OpCode.OP_GET_GLOBAL), arg)
+    }
 }
 
 number :: proc(parser: ^Parser) {

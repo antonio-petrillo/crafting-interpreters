@@ -128,6 +128,19 @@ run :: proc(vm: ^VM) -> InterpretResult {
             vm.globals[obj_str.str] = stack_peek(vm)
             stack_pop(vm)
 
+        case byte(OpCode.OP_SET_GLOBAL):
+            obj_str, ok := read_constant(vm).(^ObjString)
+            if !ok {
+                runtime_error(vm, "Constant is not a string")
+                return .INTERPRET_ERROR
+            }
+            if _, ok := vm.globals[obj_str.str]; !ok {
+                runtime_error(vm, "Undefined variable")
+                return .INTERPRET_ERROR
+            }
+            vm.globals[obj_str.str] = stack_peek(vm)
+
+
         case byte(OpCode.OP_GET_GLOBAL):
             obj_str, ok := read_constant(vm).(^ObjString)
             if !ok {

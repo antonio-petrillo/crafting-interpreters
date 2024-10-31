@@ -47,6 +47,9 @@ disassemble_instruction :: proc(c: ^Chunk, offset: uint) -> uint {
     case byte(OpCode.OP_DEFINE_GLOBAL):
         return constant_instruction("OP_DEFINE_GLOBAL", c, offset)
 
+    case byte(OpCode.OP_SET_GLOBAL):
+        return constant_instruction("OP_SET_GLOBAL", c, offset)
+
     case byte(OpCode.OP_GET_GLOBAL):
         return constant_instruction("OP_GET_GLOBAL", c, offset)
 
