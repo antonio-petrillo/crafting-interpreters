@@ -139,7 +139,7 @@ test_scanner_identifiers :: proc(t: ^testing.T) {
         Token{
             type = .STRING,
             line = 1,
-            source = "\"sdfasdfasdfad\"",
+            source = "sdfasdfasdfad",
         },
         Token{
             type = .IDENTIFIER,

@@ -132,7 +132,6 @@ parse_variable :: proc(parser: ^Parser, error_msg: string) -> byte {
 }
 
 identifier_constant :: proc(parser: ^Parser, token: Token) -> byte {
-    fmt.printf("\n\n %s \n\n", token.source)
     str_obj, alloc_err := allocate_string(token.source, parser.vm)
     if alloc_err != runtime.Allocator_Error.None {
         error_at_current(parser, "Can't allocate constant, not enough memory")

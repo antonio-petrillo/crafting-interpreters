@@ -238,11 +238,9 @@ make_token_string :: proc(s: ^Scanner) -> Token {
     advance_scanner(s)
     return Token{
         type = .STRING,
-        source = s.source[s.start:s.current],
+        source = s.source[s.start+1:s.current-1], // remove `""` from source
         line = s.line,
     }
-
-    /* return make_token(s, .STRING) */
 }
 
 make_token_number :: proc(s: ^Scanner) -> Token {

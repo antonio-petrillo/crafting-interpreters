@@ -38,8 +38,6 @@ stack_peek :: proc(vm: ^VM) -> Value {
 init_vm :: proc(vm: ^VM) {
     vm.ip = 0
     reset_stack(vm)
-    vm.chunk = &Chunk{}
-    init_chunk(vm.chunk)
     vm.globals = make(map[string]Value)
 }
 
@@ -47,13 +45,17 @@ free_vm :: proc(vm: ^VM) {
     for vm.objects != nil {
         tmp := vm.objects
         vm.objects = vm.objects.next
+        switch v in tmp.variant {
+        case ^ObjString:
+            delete(v.str)
+        }
         free(tmp)
     }
     if vm.objects != nil {
         free(vm.objects)
     }
-    vm.ip = 0
     delete(vm.globals)
+    vm.ip = 0
 }
 
 InterpretResult :: enum {
@@ -62,24 +64,23 @@ InterpretResult :: enum {
     INTERPRET_ERROR,
 }
 
-/* interpret :: proc(vm: ^VM, source: string) -> InterpretResult { */
 interpret :: proc(vm: ^VM, source: string) -> InterpretResult {
 
-    /* chunk := Chunk{} */
-    /* init_chunk(&chunk) */
+    chunk := Chunk{}
+    init_chunk(&chunk)
 
     /* if !compile(source, &vm.chunk, vm) { */
+    vm.chunk = &chunk
     if !compile(source, vm.chunk, vm) {
         free_chunk(vm.chunk)
         return .INTERPRET_COMPILE_ERROR
     }
 
-    /* vm.chunk = &chunk */
     /* vm.ip = uint(vm.chunk.code) */
-    /* vm.ip = 0 // TODO: understand the shitty code in the book (too risky with this pointers!) */
+    vm.ip = 0 // TODO: understand the shitty code in the book (too risky with this pointers!)
 
     result := run(vm)
-    /* free_chunk(&chunk) */
+    free_chunk(&chunk)
     return result
 }
 
@@ -90,10 +91,7 @@ read_byte :: proc(vm: ^VM) -> byte {
 }
 
 read_constant :: proc(vm: ^VM) -> Value {
-    /* b := read_byte(vm) */
-    /* fmt.printf("read constant at := %d\n", b) */
     return vm.chunk.constants[read_byte(vm)]
-    /* return vm.chunk.constants[b] */
 }
 
 run :: proc(vm: ^VM) -> InterpretResult {
@@ -128,24 +126,14 @@ run :: proc(vm: ^VM) -> InterpretResult {
                 return .INTERPRET_ERROR
             }
             vm.globals[obj_str.str] = stack_peek(vm)
-
-            fmt.println("storing")
-            fmt.println(vm.globals)
-
             stack_pop(vm)
 
         case byte(OpCode.OP_GET_GLOBAL):
-            /* obj := read_constant(vm) */
-            /* fmt.println(obj) */
-            /* obj_str, ok := obj.(^ObjString) */
             obj_str, ok := read_constant(vm).(^ObjString)
             if !ok {
                 runtime_error(vm, "Constant is not a string")
                 return .INTERPRET_ERROR
             }
-
-            fmt.println("getting")
-            fmt.println(vm.globals)
 
             val, found := vm.globals[obj_str.str]
             if !found {
