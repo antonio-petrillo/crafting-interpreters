@@ -3,8 +3,8 @@ package main
 import "core:fmt"
 import "core:os"
 
-DEBUG_TRACE_EXECUTION :: false
-DEBUG_PRINT_CODE :: false
+DEBUG_TRACE_EXECUTION :: true
+DEBUG_PRINT_CODE :: true
 
 main :: proc() {
     vm := &VM{}

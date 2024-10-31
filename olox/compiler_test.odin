@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:testing"
 
 @(test)
-test_compiler_had_error_on_invalid_source :: proc(t: ^testing.T) {
+test_compiler_had_error_missing_semicolon :: proc(t: ^testing.T) {
     source := ")("
     chunk := &Chunk{}
     vm := &VM{}
@@ -14,8 +14,18 @@ test_compiler_had_error_on_invalid_source :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_compiler_had_error_on_invalid_source :: proc(t: ^testing.T) {
+    source := ")(;"
+    chunk := &Chunk{}
+    vm := &VM{}
+    testing.expect_value(t, compile(source, chunk, vm), false)
+    free_chunk(chunk)
+    free_vm(vm)
+}
+
+@(test)
 test_compiler_compile_number :: proc(t: ^testing.T) {
-    source := "1234"
+    source := "1234;"
     chunk := &Chunk{}
     vm := &VM{}
     testing.expect_value(t, compile(source, chunk, vm), true)
@@ -27,7 +37,7 @@ test_compiler_compile_number :: proc(t: ^testing.T) {
 
 @(test)
 test_compiler_compile_negative_number :: proc(t: ^testing.T) {
-    source := "-1234"
+    source := "-1234;"
     chunk := &Chunk{}
     vm := &VM{}
     testing.expect_value(t, compile(source, chunk, vm), true)
@@ -41,7 +51,7 @@ test_compiler_compile_negative_number :: proc(t: ^testing.T) {
 
 @(test)
 test_compiler_compile_sum :: proc(t: ^testing.T) {
-    source := "1+2"
+    source := "1+2;"
     chunk := &Chunk{}
     vm := &VM{}
     testing.expect_value(t, compile(source, chunk, vm), true)
@@ -58,7 +68,7 @@ test_compiler_compile_sum :: proc(t: ^testing.T) {
 
 @(test)
 test_compiler_greater_expr :: proc(t: ^testing.T) {
-    source := "1>2"
+    source := "1>2;"
     chunk := &Chunk{}
     vm := &VM{}
     testing.expect_value(t, compile(source, chunk, vm), true)
@@ -75,7 +85,7 @@ test_compiler_greater_expr :: proc(t: ^testing.T) {
 
 @(test)
 test_compiler_greater_equal_expr :: proc(t: ^testing.T) {
-    source := "1>=2"
+    source := "1>=2;"
     chunk := &Chunk{}
     vm := &VM{}
     testing.expect_value(t, compile(source, chunk, vm), true)
@@ -93,7 +103,7 @@ test_compiler_greater_equal_expr :: proc(t: ^testing.T) {
 
 @(test)
 test_compiler_less_expr :: proc(t: ^testing.T) {
-    source := "1<2"
+    source := "1<2;"
     chunk := &Chunk{}
     vm := &VM{}
     testing.expect_value(t, compile(source, chunk, vm), true)
@@ -110,7 +120,7 @@ test_compiler_less_expr :: proc(t: ^testing.T) {
 
 @(test)
 test_compiler_less_equal_expr :: proc(t: ^testing.T) {
-    source := "1<=2"
+    source := "1<=2;"
     chunk := &Chunk{}
     vm := &VM{}
     testing.expect_value(t, compile(source, chunk, vm), true)
@@ -128,7 +138,7 @@ test_compiler_less_equal_expr :: proc(t: ^testing.T) {
 
 @(test)
 test_compiler_string :: proc(t: ^testing.T) {
-    source := "\"asdfasdfa\""
+    source := "\"asdfasdfa\";"
     chunk := &Chunk{}
     vm := &VM{}
     testing.expect_value(t, compile(source, chunk, vm), true)

@@ -236,7 +236,13 @@ make_token_string :: proc(s: ^Scanner) -> Token {
         return error_token(s, "Unterminated string.")
     }
     advance_scanner(s)
-    return make_token(s, .STRING)
+    return Token{
+        type = .STRING,
+        source = s.source[s.start:s.current],
+        line = s.line,
+    }
+
+    /* return make_token(s, .STRING) */
 }
 
 make_token_number :: proc(s: ^Scanner) -> Token {

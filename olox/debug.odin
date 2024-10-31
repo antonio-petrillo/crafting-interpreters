@@ -4,7 +4,6 @@ import "core:fmt"
 
 disassemble_chunk :: proc(c: ^Chunk, name: string) {
     fmt.printf("== %s ==\n", name)
-    fmt.printf("CODE\tLINE OPCODE\t      DATA...\n")
 
     for offset : uint = 0; offset < len(c.code);  {
         offset = disassemble_instruction(c, offset)
@@ -38,6 +37,18 @@ disassemble_instruction :: proc(c: ^Chunk, offset: uint) -> uint {
 
     case byte(OpCode.OP_LESS):
         return simple_instruction("OP_LESS", offset)
+
+    case byte(OpCode.OP_PRINT):
+        return simple_instruction("OP_PRINT", offset)
+
+    case byte(OpCode.OP_POP):
+        return simple_instruction("OP_POP", offset)
+
+    case byte(OpCode.OP_DEFINE_GLOBAL):
+        return constant_instruction("OP_DEFINE_GLOBAL", c, offset)
+
+    case byte(OpCode.OP_GET_GLOBAL):
+        return constant_instruction("OP_GET_GLOBAL", c, offset)
 
     case byte(OpCode.OP_ADD):
         return simple_instruction("OP_ADD", offset)

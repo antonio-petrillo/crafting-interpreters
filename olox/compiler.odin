@@ -46,11 +46,123 @@ compile :: proc(source: string, c: ^Chunk, vm: ^VM) -> bool {
     parser.vm = vm
 
     advance_compiler(parser)
-    expression(parser)
-    consume_token(parser, TokenType.EOF, "Expected end of expression")
+    /* expression(parser) */
+    /* consume_token(parser, TokenType.EOF, "Expected end of expression") */
+
+    for !match_token(parser, TokenType.EOF) {
+        declaration(parser)
+    }
 
     end_compiler(parser)
     return !parser.had_error
+}
+
+match_token :: proc(parser: ^Parser, token_type: TokenType) -> bool {
+    if !check(parser, token_type) {
+       return false
+    }
+    advance_compiler(parser)
+    return true
+}
+
+check :: proc(parser: ^Parser, token_type: TokenType) -> bool {
+    return parser.current.type == token_type
+}
+
+declaration :: proc(parser: ^Parser) {
+    if match_token(parser, TokenType.VAR) {
+        var_declaration(parser)
+    } else {
+        statement(parser)
+    }
+
+    if parser.panic_mode {
+        synchronize(parser)
+    }
+}
+
+synchronize :: proc(parser: ^Parser) {
+    parser.panic_mode = false
+    for parser.current.type != TokenType.EOF {
+        if parser.previous.type != TokenType.SEMICOLON {
+           return
+        }
+        #partial switch parser.current.type {
+        case .CLASS:
+            return
+        case .FUN:
+            return
+        case .VAR:
+            return
+        case .FOR:
+            return
+        case .IF:
+            return
+        case .WHILE:
+            return
+        case .RETURN:
+            return
+        case .PRINT:
+            return
+
+        case:
+            return
+        }
+        advance_compiler(parser)
+    }
+}
+
+var_declaration :: proc(parser: ^Parser) {
+    global := parse_variable(parser, "Expect variable name.")
+
+    if match_token(parser, TokenType.EQUAL) {
+        expression(parser)
+    } else {
+        emit_byte(parser, byte(OpCode.OP_NIL))
+    }
+
+    consume_token(parser, TokenType.SEMICOLON, "Expect ';' after variable declaration.")
+
+    define_variable(parser, global)
+}
+
+parse_variable :: proc(parser: ^Parser, error_msg: string) -> byte {
+    consume_token(parser, TokenType.IDENTIFIER, error_msg)
+    return identifier_constant(parser, parser.previous)
+}
+
+identifier_constant :: proc(parser: ^Parser, token: Token) -> byte {
+    fmt.printf("\n\n %s \n\n", token.source)
+    str_obj, alloc_err := allocate_string(token.source, parser.vm)
+    if alloc_err != runtime.Allocator_Error.None {
+        error_at_current(parser, "Can't allocate constant, not enough memory")
+        return 0
+    }
+    return make_constant(parser, str_obj)
+}
+
+define_variable :: proc(parser: ^Parser, global: byte) {
+    emit_bytes(parser, byte(OpCode.OP_DEFINE_GLOBAL), global)
+}
+
+statement :: proc(parser: ^Parser) {
+    if match_token(parser, TokenType.PRINT) {
+        print_statement(parser)
+    } else {
+        expression_statement(parser)
+    }
+}
+
+expression_statement :: proc(parser: ^Parser) {
+    expression(parser)
+    consume_token(parser, TokenType.SEMICOLON, "Expected ';' after expression.")
+    emit_byte(parser, byte(OpCode.OP_POP))
+}
+ 
+print_statement :: proc(parser: ^Parser) {
+    expression(parser)
+    consume_token(parser, TokenType.SEMICOLON, "Expected ';' after value.")
+    emit_byte(parser, byte(OpCode.OP_PRINT))
 }
 
 expression :: proc(parser: ^Parser) {
@@ -73,13 +185,23 @@ literal :: proc(parser: ^Parser) {
 // string is reserved keyword
 // note that str_obj must be freed elsewhere
 str :: proc(parser: ^Parser) {
-    str_obj, alloc_err := allocate_string(parser.previous.source[1:len(parser.previous.source)-1], parser.vm)
+    /* str_obj, alloc_err := allocate_string(parser.previous.source[1:len(parser.previous.source)-1], parser.vm) */
+    str_obj, alloc_err := allocate_string(parser.previous.source, parser.vm)
     if alloc_err != runtime.Allocator_Error.None {
         error_at_current(parser, "Can't allocate constant, not enough memory")
         return
     }
 
     emit_constant(parser, str_obj)
+}
+
+variable :: proc(parser: ^Parser) {
+    named_variable(parser, parser.previous)
+}
+
+named_variable :: proc(parser: ^Parser, tok: Token) {
+    arg := identifier_constant(parser, tok)
+    emit_bytes(parser, byte(OpCode.OP_GET_GLOBAL), arg)
 }
 
 number :: proc(parser: ^Parser) {
@@ -275,7 +397,7 @@ rules := [TokenType]ParseRule{
         .GREATER_EQUAL = { prefix=nil,      infix=binary, precedence=.COMPARISON },
         .LESS          = { prefix=nil,      infix=binary, precedence=.COMPARISON },
         .LESS_EQUAL    = { prefix=nil,      infix=binary, precedence=.COMPARISON },
-        .IDENTIFIER    = { prefix=nil,      infix=nil,     precedence=.NONE },
+        .IDENTIFIER    = { prefix=variable, infix=nil,    precedence=.NONE },
         .STRING        = { prefix=str,      infix=nil,    precedence=.NONE },
         .NUMBER        = { prefix=number,   infix=nil,    precedence=.NONE },
         .AND           = { prefix=nil,      infix=nil,    precedence=.NONE },
