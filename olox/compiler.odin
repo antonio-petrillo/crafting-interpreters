@@ -28,7 +28,7 @@ Precedence :: enum u8 {
     PRIMARY   , //
 }
 
-ParseFn ::proc(parser: ^Parser)
+ParseFn ::proc(parser: ^Parser, can_assign: bool)
 
 ParseRule :: struct {
     prefix:     ParseFn,
@@ -168,7 +168,7 @@ expression :: proc(parser: ^Parser) {
     parse_precedence(parser, .ASSIGNMENT)
 }
 
-literal :: proc(parser: ^Parser) {
+literal :: proc(parser: ^Parser, can_assign: bool) {
     #partial switch parser.previous.type {
         case .FALSE:
         emit_byte(parser, byte(OpCode.OP_FALSE))
@@ -183,7 +183,7 @@ literal :: proc(parser: ^Parser) {
 
 // string is reserved keyword
 // note that str_obj must be freed elsewhere
-str :: proc(parser: ^Parser) {
+str :: proc(parser: ^Parser, can_assign: bool) {
     str_obj, alloc_err := allocate_string(parser.previous.source, parser.vm)
     if alloc_err != runtime.Allocator_Error.None {
         error_at_current(parser, "Can't allocate constant, not enough memory")
@@ -193,13 +193,13 @@ str :: proc(parser: ^Parser) {
     emit_constant(parser, str_obj)
 }
 
-variable :: proc(parser: ^Parser) {
-    named_variable(parser, parser.previous)
+variable :: proc(parser: ^Parser, can_assign: bool) {
+    named_variable(parser, parser.previous, can_assign)
 }
 
-named_variable :: proc(parser: ^Parser, tok: Token) {
+named_variable :: proc(parser: ^Parser, tok: Token, can_assign: bool) {
     arg := identifier_constant(parser, tok)
-    if (match_token(parser, TokenType.EQUAL)) {
+    if (can_assign && match_token(parser, TokenType.EQUAL)) {
         expression(parser)
         emit_bytes(parser, byte(OpCode.OP_SET_GLOBAL), arg)
     } else {
@@ -207,7 +207,7 @@ named_variable :: proc(parser: ^Parser, tok: Token) {
     }
 }
 
-number :: proc(parser: ^Parser) {
+number :: proc(parser: ^Parser, can_assign: bool) {
     value, ok := strconv.parse_f64(parser.previous.source)
     if !ok {
         error_at_current(parser, "Input is not a valid number")
@@ -217,12 +217,12 @@ number :: proc(parser: ^Parser) {
     emit_constant(parser, value)
 }
 
-grouping :: proc(parser: ^Parser) {
+grouping :: proc(parser: ^Parser, can_assign: bool) {
     expression(parser)
     consume_token(parser, TokenType.RIGHT_PAREN, "Expect ')' after expression.")
 }
 
-unary :: proc(parser: ^Parser) {
+unary :: proc(parser: ^Parser, can_assign: bool) {
     operator_type := parser.previous.type
 
     parse_precedence(parser, .UNARY)
@@ -339,16 +339,22 @@ parse_precedence :: proc(parser: ^Parser, precedence: Precedence) {
         return
     }
 
-    prefix_rule(parser)
+    can_assign := precedence <= Precedence.ASSIGNMENT
+
+    prefix_rule(parser, can_assign)
 
     for precedence <= get_rule(parser.current.type).precedence {
         advance_compiler(parser)
         infix_rule := get_rule(parser.previous.type).infix
-        infix_rule(parser)
+        infix_rule(parser, can_assign)
+    }
+
+    if can_assign && match_token(parser, TokenType.EQUAL) {
+        error(parser, "Invalid assignment target.")
     }
 }
 
-binary :: proc(parser: ^Parser) {
+binary :: proc(parser: ^Parser, can_assign: bool) {
     operator_type := parser.previous.type
     rule := get_rule(operator_type)
 
