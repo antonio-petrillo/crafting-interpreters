@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import "core:strconv"
 import "base:runtime"
+import "core:strings"
 
 Parser :: struct {
     current:         Token,
@@ -190,9 +191,12 @@ add_local :: proc(parser: ^Parser, name: Token) {
         error(parser, "Too many local variables in function.")
         return
     }
-    parser.compiler.localCount += 1
+    /* parser.compiler.locals[parser.compiler.localCount].name.line = name.line */
+    /* parser.compiler.locals[parser.compiler.localCount].name.source = strings.clone(name.source) */
+    /* parser.compiler.locals[parser.compiler.localCount].name.type = name.type */
     parser.compiler.locals[parser.compiler.localCount].name = name
     parser.compiler.locals[parser.compiler.localCount].depth = -1
+    parser.compiler.localCount += 1
 }
 
 identifier_constant :: proc(parser: ^Parser, token: Token) -> byte {
@@ -307,7 +311,6 @@ resolve_local :: proc(parser: ^Parser, name: Token) -> int {
             return i
         }
     }
-
     return -1
 }
 
