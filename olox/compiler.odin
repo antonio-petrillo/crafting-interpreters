@@ -11,7 +11,8 @@ Parser :: struct {
     panic_mode:      bool,
     scanner:         ^Scanner,
     compiling_chunk: ^Chunk,
-    vm: ^VM,
+    vm:              ^VM,
+    compiler:        ^Compiler,
 }
 
 Precedence :: enum u8 {
@@ -36,18 +37,37 @@ ParseRule :: struct {
     precedence: Precedence,
 }
 
+UINT8_COUNT :: 256
+
+Compiler :: struct {
+    localCount: int,
+    scopeDepth: int,
+    locals: [UINT8_COUNT]Local,
+}
+
+Local :: struct {
+    name: Token,
+    depth: int,
+}
+
+init_compiler :: proc(c: ^Compiler) {
+    c.localCount = 0
+    c.scopeDepth  = 0
+}
+
 compile :: proc(source: string, c: ^Chunk, vm: ^VM) -> bool {
     scanner := &Scanner{}
     init_scanner(scanner, source)
+    compiler := &Compiler{}
+    init_compiler(compiler)
 
     parser := &Parser{}
     parser.scanner = scanner
     parser.compiling_chunk = c
     parser.vm = vm
+    parser.compiler = compiler
 
     advance_compiler(parser)
-    /* expression(parser) */
-    /* consume_token(parser, TokenType.EOF, "Expected end of expression") */
 
     for !match_token(parser, TokenType.EOF) {
         declaration(parser)
@@ -128,7 +148,52 @@ var_declaration :: proc(parser: ^Parser) {
 
 parse_variable :: proc(parser: ^Parser, error_msg: string) -> byte {
     consume_token(parser, TokenType.IDENTIFIER, error_msg)
+
+    declare_variable(parser)
+
+    if parser.compiler.scopeDepth > 0 {
+        return 0
+    }
+
     return identifier_constant(parser, parser.previous)
+}
+
+declare_variable :: proc(parser: ^Parser) {
+    if parser.compiler.scopeDepth > 0 {
+        return
+    }
+
+    name := &parser.previous
+
+    for i := parser.compiler.localCount - 1; i >= 0; i -= 1 {
+        local := &parser.compiler.locals[i]
+        if local.depth != -1 && local.depth < parser.compiler.scopeDepth {
+            break
+        }
+
+        if identifiers_equals(name, &local.name) {
+            error(parser, "Already a variable with this name in this scope.")
+        }
+    }
+
+    add_local(parser, name^)
+}
+
+identifiers_equals :: proc(a, b: ^Token) -> bool {
+    return a.source == b.source
+}
+
+// TODO: wtf? why the book pass around Token like this
+// this may not work
+add_local :: proc(parser: ^Parser, name: Token) {
+    if parser.compiler.localCount == UINT8_COUNT {
+        error(parser, "Too many local variables in function.")
+        return
+    }
+    parser.compiler.localCount += 1
+    parser.compiler.locals[parser.compiler.localCount].name = name
+    /* parser.compiler.locals[parser.compiler.localCount].depth = parser.compiler.scopeDepth */
+    parser.compiler.locals[parser.compiler.localCount].depth = -1
 }
 
 identifier_constant :: proc(parser: ^Parser, token: Token) -> byte {
@@ -140,16 +205,50 @@ identifier_constant :: proc(parser: ^Parser, token: Token) -> byte {
     return make_constant(parser, str_obj)
 }
 
+mark_initialized :: proc(current: ^Compiler) {
+    current.locals[current.localCount - 1].depth = current.scopeDepth
+}
+
 define_variable :: proc(parser: ^Parser, global: byte) {
+    if parser.compiler.scopeDepth > 0 {
+        mark_initialized(parser.compiler)
+        return
+    }
+
     emit_bytes(parser, byte(OpCode.OP_DEFINE_GLOBAL), global)
 }
 
 statement :: proc(parser: ^Parser) {
     if match_token(parser, TokenType.PRINT) {
         print_statement(parser)
+    } else if match_token(parser, TokenType.LEFT_BRACE) {
+        begin_scope(parser)
+        block(parser)
+        end_scope(parser)
     } else {
         expression_statement(parser)
     }
+}
+
+begin_scope :: proc(parser: ^Parser) {
+    parser.compiler.scopeDepth += 1
+}
+
+end_scope :: proc(parser: ^Parser) {
+    parser.compiler.scopeDepth -= 1
+
+    current := parser.compiler
+    for current.localCount > 0 && current.locals[current.localCount - 1].depth > current.scopeDepth {
+        emit_byte(parser, byte(OpCode.OP_POP))
+        current.localCount -= 1
+    }
+}
+
+block :: proc(parser: ^Parser) {
+    for !check(parser, TokenType.RIGHT_BRACE) && !check(parser, TokenType.EOF){
+        declaration(parser)
+    }
+    consume_token(parser, TokenType.RIGHT_BRACE, "Expect '}' after block")
 }
 
 expression_statement :: proc(parser: ^Parser) {
@@ -197,13 +296,41 @@ variable :: proc(parser: ^Parser, can_assign: bool) {
     named_variable(parser, parser.previous, can_assign)
 }
 
+resolve_local :: proc(parser: ^Parser, name: Token) -> int {
+    compiler := parser.compiler
+    for i := compiler.localCount - 1; i >= 0 ; i -= 1 {
+        if name.source == compiler.locals[i].name.source {
+
+            if compiler.locals[i].depth == - 1 {
+                error(parser, "Can't read local variables in its own initializer.")
+            }
+
+            return i
+        }
+    }
+
+    return -1
+}
+
 named_variable :: proc(parser: ^Parser, tok: Token, can_assign: bool) {
-    arg := identifier_constant(parser, tok)
+
+    arg := resolve_local(parser, tok)
+    get_op, set_op : byte
+
+    if arg != int(-1) {
+        get_op = byte(OpCode.OP_GET_LOCAL)
+        set_op = byte(OpCode.OP_SET_LOCAL)
+    } else {
+        arg := identifier_constant(parser, tok)
+        get_op = byte(OpCode.OP_GET_GLOBAL)
+        set_op = byte(OpCode.OP_SET_GLOBAL)
+    }
+
     if (can_assign && match_token(parser, TokenType.EQUAL)) {
         expression(parser)
-        emit_bytes(parser, byte(OpCode.OP_SET_GLOBAL), arg)
+        emit_bytes(parser, set_op, byte(arg))
     } else {
-        emit_bytes(parser, byte(OpCode.OP_GET_GLOBAL), arg)
+        emit_bytes(parser, get_op, byte(arg))
     }
 }
 

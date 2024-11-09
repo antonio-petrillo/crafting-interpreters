@@ -160,6 +160,14 @@ run :: proc(vm: ^VM) -> InterpretResult {
             stack_pop(vm)
             return .INTERPRET_OK
 
+        case byte(OpCode.OP_GET_LOCAL):
+            slot := read_byte(vm)
+            stack_push(vm, vm.stack[slot])
+
+        case byte(OpCode.OP_SET_LOCAL):
+            slot := read_byte(vm)
+            vm.stack[slot] = stack_peek(vm)
+
         case byte(OpCode.OP_PRINT):
             print_value(stack_pop(vm))
             fmt.printf("\n")

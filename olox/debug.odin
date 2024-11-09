@@ -53,6 +53,12 @@ disassemble_instruction :: proc(c: ^Chunk, offset: uint) -> uint {
     case byte(OpCode.OP_GET_GLOBAL):
         return constant_instruction("OP_GET_GLOBAL", c, offset)
 
+    case byte(OpCode.OP_GET_LOCAL):
+        return byte_instruction("OP_GET_LOCAL", c, offset)
+
+    case byte(OpCode.OP_SET_LOCAL):
+        return byte_instruction("OP_SET_LOCAL", c, offset)
+
     case byte(OpCode.OP_ADD):
         return simple_instruction("OP_ADD", offset)
 
@@ -93,5 +99,11 @@ constant_instruction :: proc(name: string, c: ^Chunk, offset: uint) -> uint {
     fmt.printf("%-16s %4d '", name, constant)
     print_value(c.constants[constant])
     fmt.printf("'\n")
+    return offset + 2
+}
+
+byte_instruction :: proc(name: string, c: ^Chunk, offset: uint) -> uint {
+    slot := c.code[offset + 1]
+    fmt.printf("%-16s %4d\n", name, slot)
     return offset + 2
 }
