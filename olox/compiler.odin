@@ -159,7 +159,7 @@ parse_variable :: proc(parser: ^Parser, error_msg: string) -> byte {
 }
 
 declare_variable :: proc(parser: ^Parser) {
-    if parser.compiler.scopeDepth > 0 {
+    if parser.compiler.scopeDepth == 0 {
         return
     }
 
@@ -192,7 +192,6 @@ add_local :: proc(parser: ^Parser, name: Token) {
     }
     parser.compiler.localCount += 1
     parser.compiler.locals[parser.compiler.localCount].name = name
-    /* parser.compiler.locals[parser.compiler.localCount].depth = parser.compiler.scopeDepth */
     parser.compiler.locals[parser.compiler.localCount].depth = -1
 }
 
@@ -317,11 +316,11 @@ named_variable :: proc(parser: ^Parser, tok: Token, can_assign: bool) {
     arg := resolve_local(parser, tok)
     get_op, set_op : byte
 
-    if arg != int(-1) {
+    if arg != -1 {
         get_op = byte(OpCode.OP_GET_LOCAL)
         set_op = byte(OpCode.OP_SET_LOCAL)
     } else {
-        arg := identifier_constant(parser, tok)
+        arg = int(identifier_constant(parser, tok))
         get_op = byte(OpCode.OP_GET_GLOBAL)
         set_op = byte(OpCode.OP_SET_GLOBAL)
     }
