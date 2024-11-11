@@ -11,7 +11,7 @@ disassemble_chunk :: proc(c: ^Chunk, name: string) {
 }
 
 disassemble_instruction :: proc(c: ^Chunk, offset: uint) -> uint {
-    fmt.printf("%04d\t", offset)
+    fmt.printf("%04d\t ", offset)
     if offset > 0 && c.lines[offset] == c.lines[offset - 1] {
         fmt.printf("\t| ")
     } else {
@@ -20,6 +20,16 @@ disassemble_instruction :: proc(c: ^Chunk, offset: uint) -> uint {
 
     instruction := c.code[offset]
     switch instruction {
+
+    case byte(OpCode.OP_LOOP):
+        return jump_instruction("OP_LOOP", -1, c, offset)
+
+    case byte(OpCode.OP_JUMP):
+        return jump_instruction("OP_JUMP", 1, c, offset)
+
+    case byte(OpCode.OP_JUMP_IF_FALSE):
+        return jump_instruction("OP_JUMP_IF_FALSE", 1, c, offset)
+
     case byte(OpCode.OP_RETURN):
         return simple_instruction("OP_RETURN", offset)
 
@@ -106,4 +116,10 @@ byte_instruction :: proc(name: string, c: ^Chunk, offset: uint) -> uint {
     slot := c.code[offset + 1]
     fmt.printf("%-16s %4d\n", name, slot)
     return offset + 2
+}
+
+jump_instruction :: proc(name: string, sign: int, c: ^Chunk, offset: uint) -> uint {
+    jump := int(c.code[offset + 1]) << 8 | int(c.code[offset + 2])
+    fmt.printf("%-16s %4d -> %d\n", name, offset, int(offset + 3) + sign * jump)
+    return offset + 3
 }

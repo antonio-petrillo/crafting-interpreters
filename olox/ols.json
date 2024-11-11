@@ -9,6 +9,6 @@
 	"profile": "default",
 	"profiles": [
 		{ "name": "default", "checker_path": ["src"]},
-		{ "name": "linux_profile", "os": "linux", "checker_path": ["main.odin"]},
+		{ "name": "linux_profile", "os": "linux", "checker_path": ["main.odin"]}
 	]
 }

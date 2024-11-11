@@ -21,6 +21,7 @@ ValueType :: distinct enum u8 {
 }
 
 print_value :: proc(value: Value) {
+
     switch v in value  {
     case f64:
         fmt.printf("%f", v)

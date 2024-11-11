@@ -39,6 +39,7 @@ ParseRule :: struct {
 }
 
 UINT8_COUNT :: 256
+UINT16_COUNT :: 0xFFFFFFFF
 
 Compiler :: struct {
     localCount: int,
@@ -208,6 +209,23 @@ identifier_constant :: proc(parser: ^Parser, token: Token) -> byte {
     return make_constant(parser, str_obj)
 }
 
+and_ :: proc(parser: ^Parser, can_assign: bool) {
+    end_jump := emit_jump(parser, byte(OpCode.OP_JUMP_IF_FALSE))
+    emit_byte(parser, byte(OpCode.OP_POP))
+    parse_precedence(parser, .AND)
+    patch_jump(parser, end_jump)
+}
+
+or_ :: proc(parser: ^Parser, can_assign: bool) {
+    else_jump := emit_jump(parser, byte(OpCode.OP_JUMP_IF_FALSE))
+    end_jump := emit_jump(parser, byte(OpCode.OP_JUMP))
+
+    patch_jump(parser, else_jump)
+    emit_byte(parser, byte(OpCode.OP_POP))
+    parse_precedence(parser, .OR)
+    patch_jump(parser, end_jump)
+}
+
 mark_initialized :: proc(current: ^Compiler) {
     current.locals[current.localCount - 1].depth = current.scopeDepth
 }
@@ -224,6 +242,12 @@ define_variable :: proc(parser: ^Parser, global: byte) {
 statement :: proc(parser: ^Parser) {
     if match_token(parser, TokenType.PRINT) {
         print_statement(parser)
+    } else if match_token(parser, TokenType.WHILE) {
+        while_statement(parser)
+    } else if match_token(parser, TokenType.FOR) {
+        for_statement(parser)
+    } else if match_token(parser, TokenType.IF) {
+        if_statement(parser)
     } else if match_token(parser, TokenType.LEFT_BRACE) {
         begin_scope(parser)
         block(parser)
@@ -231,6 +255,113 @@ statement :: proc(parser: ^Parser) {
     } else {
         expression_statement(parser)
     }
+}
+
+// this is a little too shite
+for_statement :: proc(parser: ^Parser) {
+    begin_scope(parser)
+    consume_token(parser, .LEFT_PAREN, "Expect '(' after for.")
+    if match_token(parser, .SEMICOLON) {
+
+    } else if match_token(parser, .VAR) {
+        var_declaration(parser)
+    } else {
+        expression_statement(parser)
+    }
+    loop_start := len(current_chunk(parser).code)
+    exit_jump := -1
+    if !match_token(parser, .SEMICOLON) {
+        expression(parser)
+        consume_token(parser, .SEMICOLON, "Expect ';' after loop condition.")
+        exit_jump = emit_jump(parser, byte(OpCode.OP_JUMP_IF_FALSE))
+        emit_byte(parser, byte(OpCode.OP_POP))
+    }
+    if !match_token(parser, .RIGHT_PAREN) {
+        body_jump := emit_jump(parser, byte(OpCode.OP_JUMP))
+        increment_start := len(current_chunk(parser).code)
+        expression(parser)
+        emit_byte(parser, byte(OpCode.OP_POP))
+        consume_token(parser, .RIGHT_PAREN, "Expect ')' after for clauses.")
+        emit_loop(parser, loop_start)
+        loop_start = increment_start
+        patch_jump(parser, body_jump)
+    }
+
+    statement(parser)
+    emit_loop(parser, loop_start)
+
+    if exit_jump != -1 {
+        patch_jump(parser, exit_jump)
+        emit_byte(parser, byte(OpCode.OP_POP))
+    }
+
+    end_scope(parser)
+}
+
+while_statement :: proc(parser: ^Parser) {
+    loop_start := len(current_chunk(parser).code)
+    consume_token(parser, .LEFT_PAREN, "Expect '(' after while.")
+    expression(parser)
+    consume_token(parser, .RIGHT_PAREN, "Expect ')' after while condition.")
+
+    exit_jump := emit_jump(parser, byte(OpCode.OP_JUMP_IF_FALSE))
+    emit_byte(parser, byte(OpCode.OP_POP))
+
+    statement(parser)
+    emit_loop(parser, loop_start)
+    patch_jump(parser, exit_jump)
+    emit_byte(parser, byte(OpCode.OP_POP))
+}
+
+emit_loop :: proc(parser: ^Parser, loop_start: int) {
+    emit_byte(parser, byte(OpCode.OP_LOOP))
+
+    offset := len(current_chunk(parser).code) - loop_start + 2
+    if offset > UINT16_COUNT {
+        error(parser, "Loop body too large.")
+    }
+
+    emit_byte(parser, byte((offset >> 8) & 0xFF))
+    emit_byte(parser, byte(offset & 0xFF))
+}
+
+if_statement :: proc(parser: ^Parser) {
+    consume_token(parser, TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+    expression(parser)
+    consume_token(parser, TokenType.RIGHT_PAREN, "Expect ')' after 'if'.")
+
+    then_jump := emit_jump(parser, byte(OpCode.OP_JUMP_IF_FALSE))
+    emit_byte(parser, byte(OpCode.OP_POP))
+
+    statement(parser)
+
+    else_jump := emit_jump(parser, byte(OpCode.OP_JUMP))
+
+    patch_jump(parser, then_jump)
+    emit_byte(parser, byte(OpCode.OP_POP))
+
+    if match_token(parser, TokenType.ELSE) {
+        statement(parser)
+    }
+    patch_jump(parser, else_jump)
+}
+
+emit_jump :: proc(parser: ^Parser, instruction: byte) -> int {
+    emit_byte(parser, instruction)
+    emit_byte(parser, 0xFF)
+    emit_byte(parser, 0xFF)
+    return  len(current_chunk(parser).code) - 2
+}
+
+patch_jump :: proc(parser: ^Parser, offset: int) {
+    jump := len(current_chunk(parser).code) - offset - 2
+
+    if jump > UINT16_COUNT {
+        error(parser, "Too much code to jump over.")
+    }
+
+    current_chunk(parser).code[offset] = byte(jump >> 8 & 0xFF)
+    current_chunk(parser).code[offset + 1] = byte(jump & 0xFF)
 }
 
 begin_scope :: proc(parser: ^Parser) {
@@ -538,7 +669,7 @@ rules := [TokenType]ParseRule{
         .IDENTIFIER    = { prefix=variable, infix=nil,    precedence=.NONE },
         .STRING        = { prefix=str,      infix=nil,    precedence=.NONE },
         .NUMBER        = { prefix=number,   infix=nil,    precedence=.NONE },
-        .AND           = { prefix=nil,      infix=nil,    precedence=.NONE },
+        .AND           = { prefix=nil,      infix=and_,   precedence=.AND },
         .CLASS         = { prefix=nil,      infix=nil,    precedence=.NONE },
         .ELSE          = { prefix=nil,      infix=nil,    precedence=.NONE },
         .FALSE         = { prefix=literal,  infix=nil,    precedence=.NONE },
@@ -546,7 +677,7 @@ rules := [TokenType]ParseRule{
         .FUN           = { prefix=nil,      infix=nil,    precedence=.NONE },
         .IF            = { prefix=nil,      infix=nil,    precedence=.NONE },
         .NIL           = { prefix=literal,  infix=nil,    precedence=.NONE },
-        .OR            = { prefix=nil,      infix=nil,    precedence=.NONE },
+        .OR            = { prefix=nil,      infix=or_,    precedence=.OR   },
         .PRINT         = { prefix=nil,      infix=nil,    precedence=.NONE },
         .RETURN        = { prefix=nil,      infix=nil,    precedence=.NONE },
         .SUPER         = { prefix=nil,      infix=nil,    precedence=.NONE },

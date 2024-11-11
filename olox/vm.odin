@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:strings"
+import "core:os"
 import "base:runtime"
 
 STACK_SIZE :: 256
@@ -33,6 +34,10 @@ stack_pop :: proc(vm: ^VM) -> Value {
 
 stack_peek :: proc(vm: ^VM) -> Value {
     return vm.stack[vm.stack_index - 1]
+}
+
+stack_peek_offset :: proc(vm: ^VM, offset: int) -> Value {
+    return vm.stack[int(vm.stack_index) - offset]
 }
 
 init_vm :: proc(vm: ^VM) {
@@ -90,6 +95,12 @@ read_byte :: proc(vm: ^VM) -> byte {
     return instr
 }
 
+read_short :: proc(vm: ^VM) -> u16 {
+    vm.ip += 2
+    short := u16(vm.chunk.code[vm.ip - 2]) << 8 | u16(vm.chunk.code[vm.ip - 1])
+    return short
+}
+
 read_constant :: proc(vm: ^VM) -> Value {
     return vm.chunk.constants[read_byte(vm)]
 }
@@ -97,6 +108,7 @@ read_constant :: proc(vm: ^VM) -> Value {
 run :: proc(vm: ^VM) -> InterpretResult {
     for {
         when DEBUG_TRACE_EXECUTION {
+            fmt.printf("Instruction Pointer := %d\n", vm.ip)
             fmt.printf("Stack := ( ")
             for index : u8 = 0; index < vm.stack_index; index += 1 {
                 fmt.printf("[")
@@ -128,6 +140,23 @@ run :: proc(vm: ^VM) -> InterpretResult {
             vm.globals[obj_str.str] = stack_peek(vm)
             stack_pop(vm)
 
+        case byte(OpCode.OP_LOOP):
+            offset := read_short(vm)
+            vm.ip -= uint(offset)
+
+        case byte(OpCode.OP_JUMP_IF_FALSE):
+
+            v := stack_peek(vm)
+
+            offset := read_short(vm)
+            if is_falsey(v) {
+                vm.ip += uint(offset)
+            }
+
+        case byte(OpCode.OP_JUMP):
+            offset := read_short(vm)
+            vm.ip += uint(offset)
+
         case byte(OpCode.OP_SET_GLOBAL):
             obj_str, ok := read_constant(vm).(^ObjString)
             if !ok {
@@ -158,7 +187,6 @@ run :: proc(vm: ^VM) -> InterpretResult {
 
         case byte(OpCode.OP_POP):
             stack_pop(vm)
-            return .INTERPRET_OK
 
         case byte(OpCode.OP_GET_LOCAL):
             slot := read_byte(vm)
@@ -170,7 +198,7 @@ run :: proc(vm: ^VM) -> InterpretResult {
 
         case byte(OpCode.OP_PRINT):
             print_value(stack_pop(vm))
-            fmt.printf("\n")
+            fmt.println()
 
         case byte(OpCode.OP_EQUAL):
             v1, v2 := stack_pop(vm), stack_pop(vm)
@@ -178,10 +206,8 @@ run :: proc(vm: ^VM) -> InterpretResult {
             stack_push(vm, are_equals)
 
         case byte(OpCode.OP_NOT):
-            v, ok := stack_pop(vm).(bool)
-            _, is_nil := stack_pop(vm).(LoxNil)
-            b := ok ? !v : false;
-            stack_push(vm, is_nil ? true : b)
+            b := is_falsey(stack_pop(vm))
+            stack_push(vm, !b)
 
         case byte(OpCode.OP_NEGATE):
             v, ok := stack_pop(vm).(f64)
@@ -300,6 +326,9 @@ run :: proc(vm: ^VM) -> InterpretResult {
 
             division := a_num / b_num
             stack_push(vm, division)
+        case:
+            fmt.println("unknown OP")
+            os.exit(1)
         }
     } 
 }
@@ -314,4 +343,17 @@ runtime_error :: proc(vm: ^VM, format: string,  args: ..any) {
     fmt.eprintf(format, ..args)
     fmt.eprintf(" at [line %d] in script\n", vm.chunk.lines[len(vm.chunk.lines) - 1])
     reset_stack(vm)
+}
+
+is_falsey :: proc(v: Value) -> bool {
+    #partial switch val in v {
+        case bool:
+        return !val
+
+        case LoxNil:
+        return false
+
+        case:
+        return true
+    }
 }
