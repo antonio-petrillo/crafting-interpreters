@@ -19,7 +19,7 @@ public class GenerateAst {
         Expr(Collections.emptyList()),
         Binary(List.of("Expr left", "Token operator", "Expr right")),
         Grouping(List.of("Expr expression")),
-        Literal(List.of("Literal value")),
+        Literal(List.of("LiteralValue value")),
         Unary(List.of("Token operator, Expr right"));
 
         final List<String> args;

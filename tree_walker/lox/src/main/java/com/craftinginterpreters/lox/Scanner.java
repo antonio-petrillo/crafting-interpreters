@@ -230,10 +230,10 @@ public class Scanner {
     //////////////////////////////
 
     private void addToken(TokenType type) {
-        addToken(type, Literal.nil);
+        addToken(type, LiteralValue.nil);
     }
 
-    private void addToken(TokenType type, Literal literal) {
+    private void addToken(TokenType type, LiteralValue literal) {
         String text = source.substring(start, current);
         tokens.add(new Token(type, text, literal, line));
     }

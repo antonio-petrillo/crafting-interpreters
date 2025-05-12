@@ -1,7 +1,7 @@
 package com.craftinginterpreters.lox;
 
-public record LoxStr(String s) implements Literal {
+public record LoxStr(String str) implements LiteralValue {
     public String toString() {
-        return String.format("<LoxStr> \"%s\"", s);
+        return String.format("<LoxStr: \"%s\">", str);
     }
 }
