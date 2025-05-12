@@ -1,25 +1,17 @@
 package com.craftinginterpreters.lox;
 
-// public class Token {
-//   private final TokenType type;
-//   private final String lexeme;
-//   private final Literal literal;
-//   private final int line;
+import java.util.Optional;
 
-//   public Token(TokenType type, String lexeme, Literal literal, int line) {
-//     this.type = type;
-//     this.lexeme = lexeme;
-//     this.literal = literal;
-//     this.line = line;
-//   }
+public record Token(TokenType type, String lexeme, Optional<LiteralValue> literal, int line) {
 
-//   public String toString() {
-//     return type + " " + lexeme + " " + literal;
-//   }
-// }
-
-public record Token(TokenType type, String lexeme, LiteralValue literal, int line) {
   public String toString() {
-    return type() + " " + lexeme() + " " + literal();
+    StringBuilder sb = new StringBuilder("Token{ type: ");
+    sb.append(type.toString());
+    sb.append(String.format(", lexeme: %s", lexeme));
+    if (!literal.isEmpty()) {
+      sb.append(String.format(", literal: %s", literal.get()));
+    }
+    sb.append(String.format(", line: %d }", line));
+    return sb.toString();
   }
 }
