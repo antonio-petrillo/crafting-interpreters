@@ -184,13 +184,13 @@ public class Scanner {
         TokenType type = keywords.getOrDefault(text, IDENTIFIER);
         switch(type) {
             case NIL:
-                addToken(type, Optional.of(LiteralValue.Intern.NIL));
+                addToken(type, Optional.of(LoxValue.Intern.NIL));
                 break;
             case FALSE:
-                addToken(type, Optional.of(LiteralValue.Intern.FALSE));
+                addToken(type, Optional.of(LoxValue.Intern.FALSE));
                 break;
             case TRUE:
-                addToken(type, Optional.of(LiteralValue.Intern.TRUE));
+                addToken(type, Optional.of(LoxValue.Intern.TRUE));
                 break;
             default:
                 addToken(type);
@@ -249,7 +249,7 @@ public class Scanner {
         addToken(type, Optional.empty());
     }
 
-    private void addToken(TokenType type, Optional<LiteralValue> literal) {
+    private void addToken(TokenType type, Optional<LoxValue> literal) {
         String lexeme = source.substring(start, current);
         tokens.add(new Token(type, lexeme, literal, line));
     }

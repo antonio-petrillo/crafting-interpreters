@@ -101,11 +101,11 @@ public class Parser {
 
     private Expr primary() throws ParseException {
         if (match(FALSE))
-            return new Literal(LiteralValue.Intern.FALSE);
+            return new Literal(LoxValue.Intern.FALSE);
         if (match(TRUE))
-            return new Literal(LiteralValue.Intern.TRUE);
+            return new Literal(LoxValue.Intern.TRUE);
         if (match(NIL))
-            return new Literal(LiteralValue.Intern.NIL);
+            return new Literal(LoxValue.Intern.NIL);
 
         if (match(NUMBER, STRING))
             return new Literal(previous.literal().get());

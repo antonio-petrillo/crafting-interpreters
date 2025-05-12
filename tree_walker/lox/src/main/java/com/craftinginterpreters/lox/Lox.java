@@ -11,14 +11,18 @@ import java.util.Optional;
 
 public class Lox {
     private boolean hadError = false;
+    private boolean hadRuntimeError = false;
     private final String PROMPT;
+    private final Interpreter interpreter;
 
     public Lox() {
         PROMPT = "JLOX :> ";
+        this.interpreter = new Interpreter(this);
     }
 
     public Lox(String prompt) {
         PROMPT = prompt;
+        this.interpreter = new Interpreter(this);
     }
 
     public boolean hasErrored() {
@@ -32,9 +36,10 @@ public class Lox {
     public void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
-        if (hadError) {
+        if (hadError)
             System.exit(65);
-        }
+        if (hadRuntimeError)
+            System.exit(70);
     }
 
     public void runPrompt() throws IOException {
@@ -68,6 +73,7 @@ public class Lox {
         }
 
         System.out.println(new AstPrinter().print(expr.get()));
+        interpreter.interpret(expr.get());
     }
 
     public void error(int line, String message) {
@@ -85,5 +91,10 @@ public class Lox {
     public void report(int line, String where, String message) {
         hadError = true;
         System.err.println(String.format("[line %d] Error %s: %s", line, where, message));
+    }
+
+    public void runtimeError(RuntimeError re) {
+        System.err.println(String.format("%s \n[line %d]", re.getMessage(), re.token.line()));
+        hadRuntimeError = true;
     }
 }

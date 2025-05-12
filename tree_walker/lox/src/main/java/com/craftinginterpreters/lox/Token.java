@@ -2,7 +2,7 @@ package com.craftinginterpreters.lox;
 
 import java.util.Optional;
 
-public record Token(TokenType type, String lexeme, Optional<LiteralValue> literal, int line) {
+public record Token(TokenType type, String lexeme, Optional<LoxValue> literal, int line) {
 
   public String toString() {
     StringBuilder sb = new StringBuilder("Token{ type: ");
