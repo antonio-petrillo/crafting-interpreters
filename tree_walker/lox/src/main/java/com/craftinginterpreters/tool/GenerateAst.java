@@ -17,7 +17,10 @@ public class GenerateAst {
 
     private static enum ToGen {
         Expr(Collections.emptyList()),
-        Binary(List.of("Expr left", "Token operator", "Expr right"));
+        Binary(List.of("Expr left", "Token operator", "Expr right")),
+        Grouping(List.of("Expr expression")),
+        Literal(List.of("Literal value")),
+        Unary(List.of("Token operator, Expr right"));
 
         final List<String> args;
 
@@ -44,13 +47,36 @@ public class GenerateAst {
                 for (i = 1; i < cs.length; i++) {
                     sb.append(String.format("%s%s ", cs[i], i < cs.length - 1 ? "," : ""));
                 }
-                sb.append("{  }");
+                sb.append("{\n");
+                addVisitorInterface(sb);
+                addAcceptMethod(sb);
+                sb.append("}");
             } else {
                 sb.append(String.format("public record %s(", toString()));
                 sb.append(String.join(", ", args));
                 sb.append(String.format(") implements %s { }", getBase().toString()));
             }
             return sb.toString();
+        }
+
+        private static void addVisitorInterface(StringBuilder sb) {
+            sb.append("\tpublic interface Visitor<T> {\n");
+            for (int i = 1; i < values().length; i++) {
+                String name = values()[i].toString();
+                sb.append(String.format("\t\tpublic T visit%sExpr(%s expr);\n", name, name));
+            }
+            sb.append("\t}\n\n");
+        }
+
+        private static void addAcceptMethod(StringBuilder sb) {
+            sb.append("\tpublic static <T> T accept(Visitor<T> visitor, Expr expr) {\n");
+            sb.append("\t\t return switch(expr) {\n");
+            for (int i = 1; i < values().length; i++) {
+                String name = values()[i].toString();
+                sb.append(String.format("\t\t\tcase %s e -> visitor.visit%sExpr(e);\n", name, name));
+            }
+            sb.append("\t\t};\n");
+            sb.append("\t}\n");
         }
     }
 
