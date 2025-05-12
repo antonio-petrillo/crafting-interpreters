@@ -53,28 +53,31 @@ public class GenerateAst {
             } else {
                 sb.append(String.format("public record %s(", toString()));
                 sb.append(String.join(", ", args));
-                sb.append(String.format(") implements %s {\n", getBase().toString()));
-                addAcceptMethod(sb);
-                sb.append("\n}");
+                sb.append(String.format(") implements %s { }\n", getBase()));
             }
             return sb.toString();
         }
 
         private void addVisitorInterfaceAndAccept(StringBuilder sb) {
+            sb.append("\tpublic static class VisitException extends Exception {\n");
+            sb.append("\t\tpublic VisitException(String msg) {\n");
+            sb.append("\t\t\tsuper(msg);\n");
+            sb.append("\t\t}\n");
+            sb.append("\t}\n\n");
             sb.append("\tpublic interface Visitor<T> {\n");
             for (int i = 1; i < values().length; i++) {
                 String name = values()[i].toString();
-                sb.append(String.format("\t\tpublic T visit%sExpr(%s expr);\n", name, name));
+                sb.append(String.format("\t\tpublic T visit%sExpr(%s expr) throws VisitException;\n", name, name));
             }
             sb.append("\t}\n\n");
-            sb.append("\t<T> T accept(Visitor<T> visitor);\n\n");
-        }
-
-        private void addAcceptMethod(StringBuilder sb) {
-            sb.append("\n\t@Override\n");
-            sb.append("\tpublic <T> T accept(Expr.Visitor<T> visitor) {\n");
-            sb.append(String.format("\t\treturn visitor.visit%sExpr(this);\n", toString()));
-            sb.append("\t}");
+            sb.append("\tpublic static <T> T accept(Expr expr, Visitor<T> v) throws VisitException {\n");
+            sb.append("\t\treturn switch(expr) {\n");
+            for (int i = 1; i < values().length; i++) {
+                ToGen toGen = values()[i];
+                sb.append(String.format("\t\t\tcase %s e -> v.visit%sExpr(e);\n", toGen, toGen));
+            }
+            sb.append("\t\t};\n");
+            sb.append("\t}\n");
         }
     }
 

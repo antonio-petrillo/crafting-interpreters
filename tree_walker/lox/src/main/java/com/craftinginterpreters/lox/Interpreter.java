@@ -7,12 +7,12 @@ public class Interpreter implements Expr.Visitor<LoxValue> {
         this.lox = lox;
     }
 
-    public LoxValue evaluate(Expr expr) {
-        return expr.accept(this);
+    public LoxValue evaluate(Expr expr) throws Expr.VisitException {
+        return Expr.accept(expr, this);
     }
 
 	@Override
-    public LoxValue visitBinaryExpr(Binary expr) {
+    public LoxValue visitBinaryExpr(Binary expr) throws Expr.VisitException {
         LoxValue left = evaluate(expr.left());
         LoxValue right = evaluate(expr.right());
 
@@ -23,49 +23,49 @@ public class Interpreter implements Expr.Visitor<LoxValue> {
                 } else if (left instanceof LoxStr l && right instanceof LoxStr r) {
                     yield new LoxStr(String.format("%s%s", l.str(), r.str()));
                 }
-                throw new RuntimeError(expr.operator(), "Mismatched type for PLUS operation.");
+                throw new Expr.VisitException("Mismateched type, in PLUS both operand must be both str or both num");
             }
             case MINUS -> {
                 if (left instanceof LoxNum l && right instanceof LoxNum r) {
                     yield new LoxNum(l.num() - r.num());
                 }
-                throw new RuntimeError(expr.operator(), "Mismatched type for MINUS operation.");
+                throw new Expr.VisitException("Mismateched type, in MINUS both operand must be both num");
             }
             case STAR -> {
                 if (left instanceof LoxNum l && right instanceof LoxNum r) {
                     yield new LoxNum(l.num() * r.num());
                 }
-                throw new RuntimeError(expr.operator(), "Mismatched type for STAR operation.");
+                throw new Expr.VisitException("Mismateched type, in STAR both operand must be both num");
             }
             case SLASH -> {
                 if (left instanceof LoxNum l && right instanceof LoxNum r) {
                     yield new LoxNum(l.num() / r.num());
                 }
-                throw new RuntimeError(expr.operator(), "Mismatched type for SLASH operation.");
+                throw new Expr.VisitException("Mismateched type, in SLASH both operand must be both num");
             }
             case LESS -> {
                 if (left instanceof LoxNum l && right instanceof LoxNum r) {
                     yield LoxValue.Intern.fromBool(l.num() < r.num());
                 }
-                throw new RuntimeError(expr.operator(), "Mismatched type for LESS operation.");
+                throw new Expr.VisitException("Mismateched type, in LESS both operand must be both num");
             }
             case LESS_EQUAL -> {
                 if (left instanceof LoxNum l && right instanceof LoxNum r) {
                     yield LoxValue.Intern.fromBool(l.num() <= r.num());
                 }
-                throw new RuntimeError(expr.operator(), "Mismatched type for LESS_EQUAL operation.");
+                throw new Expr.VisitException("Mismateched type, in LESS_EQUAL both operand must be both num");
             }
             case GREATER -> {
                 if (left instanceof LoxNum l && right instanceof LoxNum r) {
                     yield LoxValue.Intern.fromBool(l.num() > r.num());
                 }
-                throw new RuntimeError(expr.operator(), "Mismatched type for GREATER operation.");
+                throw new Expr.VisitException("Mismateched type, in GREATER both operand must be both num");
             }
             case GREATER_EQUAL -> {
                 if (left instanceof LoxNum l && right instanceof LoxNum r) {
                     yield LoxValue.Intern.fromBool(l.num() >= r.num());
                 }
-                throw new RuntimeError(expr.operator(), "Mismatched type for GREATER_EQUAL operation.");
+                throw new Expr.VisitException("Mismateched type, in GREATER_EQUAL both operand must be both num");
             }
             case BANG_EQUAL -> {
                 yield LoxValue.Intern.fromBool(!left.equals(right));
@@ -74,22 +74,22 @@ public class Interpreter implements Expr.Visitor<LoxValue> {
                 yield LoxValue.Intern.fromBool(left.equals(right));
             }
 
-            default -> throw new RuntimeError(expr.operator(), "Invalid Operator");
+            default -> throw new Expr.VisitException(String.format("Unsupporte Operation: %s", expr.operator().toString()));
         };
  	}
 
 	@Override
-	public LoxValue visitGroupingExpr(Grouping expr) {
+	public LoxValue visitGroupingExpr(Grouping expr) throws Expr.VisitException {
         return evaluate(expr.expression());
 	}
 
 	@Override
-	public LoxValue visitLiteralExpr(Literal expr) {
+	public LoxValue visitLiteralExpr(Literal expr) throws Expr.VisitException {
         return expr.value();
 	}
 
     @Override
-    public LoxValue visitUnaryExpr(Unary expr) {
+    public LoxValue visitUnaryExpr(Unary expr) throws Expr.VisitException {
         LoxValue right = evaluate(expr.right());
         return switch (expr.operator().type()) {
             case MINUS -> {
@@ -116,13 +116,9 @@ public class Interpreter implements Expr.Visitor<LoxValue> {
         };
     }
 
-    public void interpret(Expr expression) {
-        try {
-            LoxValue value = evaluate(expression);
-            System.out.println(value.toString());
-        } catch (RuntimeError re) {
-            lox.runtimeError(re);
-        }
+    public void interpret(Expr expression) throws Expr.VisitException {
+        LoxValue value = evaluate(expression);
+        System.out.println(value.toString());
     }
 
 }

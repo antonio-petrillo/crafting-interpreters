@@ -57,7 +57,7 @@ public class Lox {
         }
     }
 
-    private void run(String source) {
+    private void run(String source)  {
         Scanner scanner = new Scanner(this, source);
         List<Token> tokens = scanner.scanTokens();
 
@@ -72,8 +72,13 @@ public class Lox {
             return;
         }
 
-        System.out.println(new AstPrinter().print(expr.get()));
-        interpreter.interpret(expr.get());
+        try {
+            System.out.println(new AstPrinter().print(expr.get()));
+            interpreter.interpret(expr.get());
+        } catch (Expr.VisitException ve) {
+            ve.printStackTrace();
+            runtimeError(ve);
+        }
     }
 
     public void error(int line, String message) {
@@ -93,8 +98,8 @@ public class Lox {
         System.err.println(String.format("[line %d] Error %s: %s", line, where, message));
     }
 
-    public void runtimeError(RuntimeError re) {
-        System.err.println(String.format("%s \n[line %d]", re.getMessage(), re.token.line()));
+    private void runtimeError(Expr.VisitException ve) {
+        System.err.println(ve.getMessage());
         hadRuntimeError = true;
     }
 }

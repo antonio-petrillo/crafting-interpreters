@@ -10,12 +10,12 @@ public class AstPrinter implements Expr.Visitor<String> {
         this.ident = identStr;
     }
 
-    public String print(Expr expr) {
-        return String.format("AST:\n%s\n\n", expr.accept(this));
+    public String print(Expr expr) throws Expr.VisitException {
+        return String.format("AST:\n%s\n\n", Expr.accept(expr, this));
     }
 
     @Override
-    public String visitBinaryExpr(Binary expr) {
+    public String visitBinaryExpr(Binary expr) throws Expr.VisitException {
         nesting++;
         String str = parenthesize(expr.operator().lexeme(), expr.left(), expr.right());
         nesting--;
@@ -24,7 +24,7 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
-    public String visitGroupingExpr(Grouping expr) {
+    public String visitGroupingExpr(Grouping expr) throws Expr.VisitException {
         nesting++;
         String str = parenthesize("group", expr.expression());
         nesting--;
@@ -33,7 +33,7 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
-    public String visitLiteralExpr(Literal expr) {
+    public String visitLiteralExpr(Literal expr) throws Expr.VisitException {
         nesting++;
         String str = expr.value().toString();
         nesting--;
@@ -42,7 +42,7 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
-    public String visitUnaryExpr(Unary expr) {
+    public String visitUnaryExpr(Unary expr) throws Expr.VisitException {
         nesting++;
         String str = parenthesize(expr.operator().lexeme(), expr.right());
         nesting--;
@@ -51,13 +51,13 @@ public class AstPrinter implements Expr.Visitor<String> {
 
     }
 
-    private String parenthesize(String name, Expr... exprs) {
+    private String parenthesize(String name, Expr... exprs) throws Expr.VisitException {
         String nest = ident.repeat(nesting);
         StringBuilder builder = new StringBuilder(String.format("(%s\n%s", name, nest));
 
         for (int i = 0; i < exprs.length; i++) {
             nesting++;
-            builder.append(exprs[i].accept(this));
+            builder.append(Expr.accept(exprs[i], this));
             nesting--;
             if (i == exprs.length - 1) {
                 builder.append(")");

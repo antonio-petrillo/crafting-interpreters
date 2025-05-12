@@ -2,13 +2,25 @@
 package com.craftinginterpreters.lox;
 
 public sealed interface Expr permits Binary, Grouping, Literal, Unary {
-	public interface Visitor<T> {
-		public T visitBinaryExpr(Binary expr);
-		public T visitGroupingExpr(Grouping expr);
-		public T visitLiteralExpr(Literal expr);
-		public T visitUnaryExpr(Unary expr);
+	public static class VisitException extends Exception {
+		public VisitException(String msg) {
+			super(msg);
+		}
 	}
 
-	<T> T accept(Visitor<T> visitor);
+	public interface Visitor<T> {
+		public T visitBinaryExpr(Binary expr) throws VisitException;
+		public T visitGroupingExpr(Grouping expr) throws VisitException;
+		public T visitLiteralExpr(Literal expr) throws VisitException;
+		public T visitUnaryExpr(Unary expr) throws VisitException;
+	}
 
+	public static <T> T accept(Expr expr, Visitor<T> v) throws VisitException {
+		return switch(expr) {
+			case Binary e -> v.visitBinaryExpr(e);
+			case Grouping e -> v.visitGroupingExpr(e);
+			case Literal e -> v.visitLiteralExpr(e);
+			case Unary e -> v.visitUnaryExpr(e);
+		};
+	}
 }
