@@ -7,10 +7,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public class Scanner {
-    private static final Map<String, TokenType> keywords;
+    private static final Map<String, TokenType> keywords = new HashMap<>();;
 
     static {
-        keywords = new HashMap<>();
         keywords.put("and", TokenType.AND);
         keywords.put("class", TokenType.CLASS);
         keywords.put("else", TokenType.ELSE);
@@ -36,7 +35,7 @@ public class Scanner {
 
     private int start = 0;
     private int current = 0;
-    private int line = 0;
+    private int line = 1;
 
     public Scanner(Lox lox, String source) {
         this.source = source;
@@ -52,7 +51,7 @@ public class Scanner {
             scanToken();
         }
 
-        tokens.add(new Token(TokenType.EOF, "", null, line));
+        tokens.add(new Token(TokenType.EOF, "", Optional.empty(), line));
         exhausted = true;
         return tokens;
     }
@@ -131,6 +130,7 @@ public class Scanner {
                 if (isDigit(c)) {
                     number();
                 } else if (isAlpha(c)) {
+                    identifier();
                 } else {
                     context.error(line, String.format("Unexpected character [%c].", c));
                 }
@@ -156,7 +156,7 @@ public class Scanner {
         advance();
 
         String value = source.substring(start + 1, current - 1);
-        addToken(TokenType.STRING, new LoxStr(value));
+        addToken(TokenType.STRING, Optional.of(new LoxStr(value)));
     }
 
     private void number() {
@@ -171,7 +171,7 @@ public class Scanner {
         }
 
         Double num = Double.parseDouble(source.substring(start, current));
-        addToken(TokenType.NUMBER, new LoxNum(num));
+        addToken(TokenType.NUMBER, Optional.of(new LoxNum(num)));
     }
 
     private void identifier() {
@@ -179,7 +179,21 @@ public class Scanner {
             advance();
 
         String text = source.substring(start, current);
-        addToken(keywords.getOrDefault(text, TokenType.IDENTIFIER));
+        TokenType type = keywords.getOrDefault(text, TokenType.IDENTIFIER);
+        switch(type) {
+            case NIL:
+                addToken(type, Optional.of(LiteralValue.Intern.NIL));
+                break;
+            case FALSE:
+                addToken(type, Optional.of(LiteralValue.Intern.FALSE));
+                break;
+            case TRUE:
+                addToken(type, Optional.of(LiteralValue.Intern.TRUE));
+                break;
+            default:
+                addToken(type);
+                break;
+        }
     }
 
     ////////////////////////////////////////////
@@ -230,11 +244,11 @@ public class Scanner {
     //////////////////////////////
 
     private void addToken(TokenType type) {
-        addToken(type, LiteralValue.nil);
+        addToken(type, Optional.empty());
     }
 
-    private void addToken(TokenType type, LiteralValue literal) {
-        String text = source.substring(start, current);
-        tokens.add(new Token(type, text, literal, line));
+    private void addToken(TokenType type, Optional<LiteralValue> literal) {
+        String lexeme = source.substring(start, current);
+        tokens.add(new Token(type, lexeme, literal, line));
     }
 }
