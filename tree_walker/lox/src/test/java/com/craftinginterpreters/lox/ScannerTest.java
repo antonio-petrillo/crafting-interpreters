@@ -26,6 +26,29 @@ public class ScannerTest {
     }
 
     @Test
+    public void shouldProduceThrowIllegalStateIfExhausted() {
+        List<Token> expecteds = List.of(new Token(EOF, "", Optional.empty(), 1));
+        String sourceCode = "";
+
+        Lox lox = new Lox();
+        Scanner scanner = new Scanner(lox, sourceCode);
+
+        List<Token> actuals = scanner.scanTokens();
+        assertTrue(actuals.size() == expecteds.size(),
+                String.format("Expected %d tokens, got %d.", expecteds.size(), actuals.size()));
+
+        Iterator<Token> iter = actuals.iterator();
+        for (Token expected : expecteds) {
+            assertEquals(expected, iter.next());
+        }
+
+
+        IllegalStateException illegalState = assertThrows(IllegalStateException.class, () -> scanner.scanTokens(), "Scanner should be in IllegalStateExcpetion if scanTokens is called two times on the same scanner.");
+
+        assertTrue(illegalState.getMessage().equals( "[PANIC] tokens already lexed and returned, scanner consumed."));
+    }
+
+    @Test
     public void shouldProduceSingleCharactersTokensWithSpaces() {
         List<Token> expecteds = List.of(
                 new Token(LEFT_PAREN, "(", Optional.empty(), 1),
