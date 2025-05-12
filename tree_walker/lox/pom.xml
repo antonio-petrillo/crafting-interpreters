@@ -82,10 +82,28 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
           <version>3.1.0</version>
-          <configuration>
-            <mainClass>com.craftinginterpreters.lox.Main</mainClass>
-            <!-- Update this to match your class -->
-          </configuration>
+          <executions>
+            <execution>
+              <id>run</id>
+              <phase>none</phase>
+              <goals>
+                <goal>java</goal>
+              </goals>
+              <configuration>
+                <mainClass>com.craftinginterpreters.lox.Main</mainClass>
+              </configuration>
+            </execution>
+            <execution>
+              <id>tool</id>
+              <phase>none</phase>
+              <goals>
+                <goal>java</goal>
+              </goals>
+              <configuration>
+                <mainClass>com.craftinginterpreters.tool.GenerateAst</mainClass>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
