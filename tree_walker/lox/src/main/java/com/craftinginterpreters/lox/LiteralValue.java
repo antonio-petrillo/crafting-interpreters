@@ -1,14 +1,16 @@
 package com.craftinginterpreters.lox;
 
-public sealed interface LiteralValue permits LoxStr, LoxNum, LiteralValue.Nil {
-    public static final LiteralValue.Nil nil = new LiteralValue.Nil();
+public sealed interface LiteralValue permits LoxStr, LoxNum, LiteralValue.Intern {
 
-    public static final class Nil implements LiteralValue {
-
-        private Nil() {};
+    public static enum Intern implements LiteralValue {
+        NIL, FALSE, TRUE;
 
         public String toString() {
-            return "<LoxNil>";
+            return switch(this) {
+                case NIL -> "<LoxIntern: Nil>";
+                case FALSE -> "<LoxIntern: False>";
+                case TRUE -> "<LoxIntern: True>";
+            };
         }
 
     }
