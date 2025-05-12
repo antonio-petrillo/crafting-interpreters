@@ -26,7 +26,7 @@ public class ScannerTest {
     }
 
     @Test
-    public void shouldProduceThrowIllegalStateIfExhausted() {
+    public void shouldThrowIllegalStateIfExhausted() {
         List<Token> expecteds = List.of(new Token(EOF, "", Optional.empty(), 1));
         String sourceCode = "";
 

@@ -4,8 +4,6 @@ import static com.craftinginterpreters.lox.TokenType.*;
 
 import java.util.List;
 import java.util.Optional;
-
-import java.text.ParseException;
 import java.util.Iterator;
 
 public class Parser {
@@ -15,6 +13,7 @@ public class Parser {
     private final Iterator<Token> tokens;
     private Token current;
     private Token previous;
+    private boolean exhausted = false;
 
     public Parser(Lox lox, List<Token> tokens) {
         this.lox = lox;
@@ -27,10 +26,14 @@ public class Parser {
     //////////////////////////
 
     public Optional<Expr> parse() {
+        if (exhausted)
+            throw new IllegalStateException("[PANIC] AST already generated, parser consumed.");
         try {
             return Optional.of(expression());
         } catch (ParseException pe) {
             return Optional.empty();
+        } finally {
+            exhausted = true;
         }
     }
 
