@@ -44,7 +44,6 @@ public class ScannerTest {
 
 
         IllegalStateException illegalState = assertThrows(IllegalStateException.class, () -> scanner.scanTokens(), "Scanner should be in IllegalStateExcpetion if scanTokens is called two times on the same scanner.");
-
         assertTrue(illegalState.getMessage().equals( "[PANIC] tokens already lexed and returned, scanner consumed."));
     }
 

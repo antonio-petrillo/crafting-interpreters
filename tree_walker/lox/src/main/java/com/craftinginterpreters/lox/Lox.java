@@ -59,10 +59,27 @@ public class Lox {
         for (Token tok : tokens) {
             System.out.println(tok);
         }
+
+        Parser parser = new Parser(this, tokens);
+        Optional<Expr> expr = parser.parse();
+
+        if (hadError || expr.isEmpty()) {
+            return;
+        }
+
+        System.out.println(new AstPrinter().print(expr.get()));
     }
 
     public void error(int line, String message) {
         report(line, "", message);
+    }
+
+    public void error(Token token, String message) {
+        if (token.type() == TokenType.EOF) {
+            report(token.line(), " at end", message);
+        } else {
+            report(token.line(), String.format(" at '%s'", token.lexeme()), message);
+        }
     }
 
     public void report(int line, String where, String message) {
