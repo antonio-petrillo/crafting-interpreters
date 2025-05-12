@@ -3,7 +3,7 @@ package com.craftinginterpreters.lox;
 public class AstPrinter implements Expr.Visitor<String> {
 
     public String print(Expr expr) {
-        return Expr.accept(this, expr);
+        return expr.accept(this);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class AstPrinter implements Expr.Visitor<String> {
         builder.append("(").append(name);
         for (Expr expr : exprs) {
             builder.append(" ");
-            builder.append(Expr.accept(this, expr));
+            builder.append(expr.accept(this));
         }
         builder.append(")");
 

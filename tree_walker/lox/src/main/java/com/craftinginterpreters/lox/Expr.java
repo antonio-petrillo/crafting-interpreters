@@ -9,12 +9,6 @@ public sealed interface Expr permits Binary, Grouping, Literal, Unary {
 		public T visitUnaryExpr(Unary expr);
 	}
 
-	public static <T> T accept(Visitor<T> visitor, Expr expr) {
-		 return switch(expr) {
-			case Binary e -> visitor.visitBinaryExpr(e);
-			case Grouping e -> visitor.visitGroupingExpr(e);
-			case Literal e -> visitor.visitLiteralExpr(e);
-			case Unary e -> visitor.visitUnaryExpr(e);
-		};
-	}
+	<T> T accept(Visitor<T> visitor);
+
 }

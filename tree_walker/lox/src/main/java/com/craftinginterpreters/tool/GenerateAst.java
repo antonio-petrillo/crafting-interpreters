@@ -48,35 +48,33 @@ public class GenerateAst {
                     sb.append(String.format("%s%s ", cs[i], i < cs.length - 1 ? "," : ""));
                 }
                 sb.append("{\n");
-                addVisitorInterface(sb);
-                addAcceptMethod(sb);
+                addVisitorInterfaceAndAccept(sb);
                 sb.append("}");
             } else {
                 sb.append(String.format("public record %s(", toString()));
                 sb.append(String.join(", ", args));
-                sb.append(String.format(") implements %s { }", getBase().toString()));
+                sb.append(String.format(") implements %s {\n", getBase().toString()));
+                addAcceptMethod(sb);
+                sb.append("\n}");
             }
             return sb.toString();
         }
 
-        private static void addVisitorInterface(StringBuilder sb) {
+        private void addVisitorInterfaceAndAccept(StringBuilder sb) {
             sb.append("\tpublic interface Visitor<T> {\n");
             for (int i = 1; i < values().length; i++) {
                 String name = values()[i].toString();
                 sb.append(String.format("\t\tpublic T visit%sExpr(%s expr);\n", name, name));
             }
             sb.append("\t}\n\n");
+            sb.append("\t<T> T accept(Visitor<T> visitor);\n\n");
         }
 
-        private static void addAcceptMethod(StringBuilder sb) {
-            sb.append("\tpublic static <T> T accept(Visitor<T> visitor, Expr expr) {\n");
-            sb.append("\t\t return switch(expr) {\n");
-            for (int i = 1; i < values().length; i++) {
-                String name = values()[i].toString();
-                sb.append(String.format("\t\t\tcase %s e -> visitor.visit%sExpr(e);\n", name, name));
-            }
-            sb.append("\t\t};\n");
-            sb.append("\t}\n");
+        private void addAcceptMethod(StringBuilder sb) {
+            sb.append("\n\t@Override\n");
+            sb.append("\tpublic <T> T accept(Expr.Visitor<T> visitor) {\n");
+            sb.append(String.format("\t\treturn visitor.visit%sExpr(this);\n", toString()));
+            sb.append("\t}");
         }
     }
 
