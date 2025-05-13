@@ -24,7 +24,6 @@ public class Parser {
     //////////////////////////
     // Parsing Verbs - LALR //
     //////////////////////////
-
     public Optional<Expr> parse() {
         if (exhausted)
             throw new IllegalStateException("[PANIC] AST already generated, parser consumed.");

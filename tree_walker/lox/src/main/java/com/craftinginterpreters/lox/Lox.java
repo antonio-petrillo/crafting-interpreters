@@ -69,11 +69,13 @@ public class Lox {
         Optional<Expr> expr = parser.parse();
 
         if (hadError || expr.isEmpty()) {
+            System.err.printf("");
             return;
         }
 
+        System.out.println(new AstPrinter().print(expr.get()));
+
         try {
-            System.out.println(new AstPrinter().print(expr.get()));
             interpreter.interpret(expr.get());
         } catch (Expr.VisitException ve) {
             ve.printStackTrace();
@@ -95,11 +97,11 @@ public class Lox {
 
     public void report(int line, String where, String message) {
         hadError = true;
-        System.err.println(String.format("[line %d] Error %s: %s", line, where, message));
+        System.err.printf("[line %d] Error %s: %s\n", line, where, message);
     }
 
-    private void runtimeError(Expr.VisitException ve) {
-        System.err.println(ve.getMessage());
+    private void runtimeError(Exception e) {
+        System.err.println(e.getMessage());
         hadRuntimeError = true;
     }
 }

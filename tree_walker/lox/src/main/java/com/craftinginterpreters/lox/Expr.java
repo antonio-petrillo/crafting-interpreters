@@ -21,6 +21,7 @@ public sealed interface Expr permits Binary, Grouping, Literal, Unary {
 			case Grouping e -> v.visitGroupingExpr(e);
 			case Literal e -> v.visitLiteralExpr(e);
 			case Unary e -> v.visitUnaryExpr(e);
+			default -> throw new VisitException("Unknown Expr");
 		};
 	}
 }

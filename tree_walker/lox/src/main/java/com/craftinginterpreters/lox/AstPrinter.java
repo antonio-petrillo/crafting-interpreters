@@ -10,8 +10,13 @@ public class AstPrinter implements Expr.Visitor<String> {
         this.ident = identStr;
     }
 
-    public String print(Expr expr) throws Expr.VisitException {
-        return String.format("AST:\n%s\n\n", Expr.accept(expr, this));
+    public String print(Expr expr) {
+        try {
+            return String.format("AST:\n%s\n\n", Expr.accept(expr, this));
+        } catch (Expr.VisitException ve) {
+            System.err.printf("Error during AST printing: look for error in your syntax\n");
+        }
+        return "";
     }
 
     @Override
