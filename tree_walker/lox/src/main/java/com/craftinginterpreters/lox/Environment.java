@@ -12,6 +12,8 @@ public class Environment {
         this.enclosing = Optional.empty();
     }
     public Environment(Environment enclosing) {
+        if (enclosing == null)
+            throw new IllegalArgumentException("The Enclosing env cannot be null.");
         this.enclosing = Optional.of(enclosing);
     }
 

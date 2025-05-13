@@ -2,6 +2,7 @@ package com.craftinginterpreters.lox;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static com.craftinginterpreters.lox.TokenType.*;
+
 import static com.craftinginterpreters.lox.Stmt.*;
 import static com.craftinginterpreters.lox.Expr.*;
 
@@ -152,4 +153,33 @@ public class ParserTest {
         testParserGivenSource(List.<Stmt>of(new Print(expected1), new Expression(expected2)), sourceCode);
     }
 
+    @Test
+    public void shouldParseBlock() {
+        String sourceCode = "{1; 1; 1;}";
+        Stmt one = new Expression(new Literal(new LoxNum(1)));
+
+        testParserGivenSource(List.<Stmt>of(new Block(List.<Stmt>of(one, one, one))), sourceCode);
+    }
+
+    @Test
+    public void shouldParseVar() {
+        String sourceCode = "var a = 1;";
+        Expr one = new Literal(new LoxNum(1));
+        Token a = new Token(IDENTIFIER, "a",Optional.empty(), 1);
+        List<Stmt> expected = List.<Stmt>of(new Var(a, one));
+
+        testParserGivenSource(expected, sourceCode);
+    }
+
+    @Test
+    public void shouldParseVarAndAssign() {
+        String sourceCode = "var a = 1; a = 2;";
+        Expr one = new Literal(new LoxNum(1));
+        Expr two = new Literal(new LoxNum(2));
+        Token a = new Token(IDENTIFIER, "a",Optional.empty(), 1);
+        Assign assign = new Assign(a, two);
+        List<Stmt> expected = List.<Stmt>of(new Var(a, one), new Expression(assign));
+
+        testParserGivenSource(expected, sourceCode);
+    }
 }

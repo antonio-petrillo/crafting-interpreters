@@ -2,9 +2,6 @@ package com.craftinginterpreters.lox;
 
 import java.util.List;
 
-import com.craftinginterpreters.lox.Expr.Variable;
-import com.craftinginterpreters.lox.Stmt.Block;
-
 import static com.craftinginterpreters.lox.Expr.*;
 import static com.craftinginterpreters.lox.Stmt.*;
 
@@ -125,6 +122,14 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
         };
     }
 
+    private boolean isTruthyValue(LoxValue value) {
+        return switch (isTruthy(value)) {
+            case LoxValue.Intern.FALSE -> false;
+            case LoxValue.Intern.TRUE -> true;
+            case LoxValue.Intern.NIL -> false;
+        };
+    }
+
     public void interpret(List<Stmt> statements) throws VisitException {
         for (Stmt stmt : statements) {
             execute(stmt);
@@ -191,6 +196,16 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
         } finally {
             this.environment = prev;
         }
+    }
+
+    @Override
+    public Void visitIfStmt(If stmt) throws VisitException {
+        if(isTruthyValue(evaluate(stmt.condition()))) {
+            execute(stmt.thenBranch());
+        } else if (!stmt.elseBranch().isEmpty()) {
+            execute(stmt.elseBranch().get());
+        }
+        return null;
     }
 
 }

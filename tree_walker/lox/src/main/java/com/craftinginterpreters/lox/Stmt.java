@@ -1,24 +1,28 @@
 package com.craftinginterpreters.lox;
 
 import java.util.List;
+import java.util.Optional;
 
 public sealed interface Stmt permits
     Stmt.Expression,
     Stmt.Print,
     Stmt.Var,
-    Stmt.Block
+    Stmt.Block,
+    Stmt.If
 {
 
     public static record Expression(Expr expression) implements Stmt {  }
     public static record Var(Token name, Expr initializer) implements Stmt {  }
     public static record Print(Expr expression) implements Stmt {  }
     public static record Block(List<Stmt> statements) implements Stmt {  }
+    public static record If(Expr condition, Stmt thenBranch, Optional<Stmt> elseBranch) implements Stmt {  }
 
     public interface Visitor<T> {
         T visitExpressionStmt(Expression stmt) throws VisitException;
         T visitPrintStmt(Print stmt) throws VisitException;
         T visitVarStmt(Var stmt) throws VisitException;
         T visitBlockStmt(Block stmt) throws VisitException;
+        T visitIfStmt(If stmt) throws VisitException;
     }
 
     public static <T> T accept(Stmt stmt, Visitor<T> v) throws VisitException {
@@ -27,6 +31,7 @@ public sealed interface Stmt permits
             case Print s -> v.visitPrintStmt(s);
             case Var s -> v.visitVarStmt(s);
             case Block s -> v.visitBlockStmt(s);
+            case If s -> v.visitIfStmt(s);
             default -> throw new VisitException("Unknown Stmt");
         };
     }

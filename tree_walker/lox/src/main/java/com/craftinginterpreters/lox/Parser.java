@@ -5,6 +5,7 @@ import static com.craftinginterpreters.lox.Expr.*;
 import static com.craftinginterpreters.lox.Stmt.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -62,10 +63,24 @@ public class Parser {
     }
 
     private Stmt statement() throws ParseException {
+        if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
         if (match(LEFT_BRACE)) return new Block(block());
 
         return expressionStatement();
+    }
+
+    private Stmt ifStatement() throws ParseException {
+        consume(LEFT_PAREN, "Expect '(' after 'if'. ");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ')' after 'if' condition. ");
+        Stmt thenBranch = statement();
+        Optional<Stmt> elseBranch = Optional.empty();
+        if (match(ELSE)) {
+            elseBranch = Optional.of(statement());
+        }
+
+        return new If(condition, thenBranch, elseBranch);
     }
 
     private Stmt printStatement() throws ParseException {
