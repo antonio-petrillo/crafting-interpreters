@@ -1,11 +1,6 @@
 package com.craftinginterpreters.lox;
 
 public sealed interface Expr permits Binary, Grouping, Literal, Unary {
-	public static class VisitException extends Exception {
-		public VisitException(String msg) {
-			super(msg);
-		}
-	}
 
 	public interface Visitor<T> {
 		public T visitBinaryExpr(Binary expr) throws VisitException;

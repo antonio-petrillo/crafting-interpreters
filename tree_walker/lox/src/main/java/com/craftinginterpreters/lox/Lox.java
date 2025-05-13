@@ -60,26 +60,19 @@ public class Lox {
     private void run(String source)  {
         Scanner scanner = new Scanner(this, source);
         List<Token> tokens = scanner.scanTokens();
-
-        for (Token tok : tokens) {
-            System.out.println(tok);
-        }
-
-        Parser parser = new Parser(this, tokens);
-        Optional<Expr> expr = parser.parse();
-
-        if (hadError || expr.isEmpty()) {
-            System.err.printf("");
-            return;
-        }
-
-        System.out.println(new AstPrinter().print(expr.get()));
-
         try {
-            interpreter.interpret(expr.get());
-        } catch (Expr.VisitException ve) {
-            ve.printStackTrace();
-            runtimeError(ve);
+            Parser parser = new Parser(this, tokens);
+            List<Stmt> program = parser.parse();
+
+            new AstPrinter().print(program);
+
+            if (hadError) {
+                System.err.printf("");
+                return;
+            }
+            interpreter.interpret(program);
+        } catch (VisitException e) {
+            runtimeError(e);
         }
     }
 

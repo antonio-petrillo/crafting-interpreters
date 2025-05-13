@@ -7,9 +7,9 @@ public sealed interface LoxValue permits LoxStr, LoxNum, LoxValue.Intern {
 
         public String toString() {
             return switch(this) {
-                case NIL -> "<LoxIntern: Nil>";
-                case FALSE -> "<LoxIntern: False>";
-                case TRUE -> "<LoxIntern: True>";
+                case NIL -> "nil";
+                case FALSE -> "false";
+                case TRUE -> "true";
             };
         }
 

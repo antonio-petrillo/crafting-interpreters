@@ -93,16 +93,6 @@
                 <mainClass>com.craftinginterpreters.lox.Main</mainClass>
               </configuration>
             </execution>
-            <execution>
-              <id>tool</id>
-              <phase>none</phase>
-              <goals>
-                <goal>java</goal>
-              </goals>
-              <configuration>
-                <mainClass>com.craftinginterpreters.tool.GenerateAst</mainClass>
-              </configuration>
-            </execution>
           </executions>
         </plugin>
       </plugins>

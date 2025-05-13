@@ -1,6 +1,8 @@
 package com.craftinginterpreters.lox;
 
-public class AstPrinter implements Expr.Visitor<String> {
+import java.util.List;
+
+public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     private int nesting = 0;
     private String ident = "  ";
@@ -10,17 +12,21 @@ public class AstPrinter implements Expr.Visitor<String> {
         this.ident = identStr;
     }
 
-    public String print(Expr expr) {
+    public void print(List<Stmt> program) {
         try {
-            return String.format("AST:\n%s\n\n", Expr.accept(expr, this));
-        } catch (Expr.VisitException ve) {
+            for(Stmt stmt : program) {
+                StringBuilder sb = new StringBuilder("STMT:\n");
+                sb.append(Stmt.accept(stmt, this));
+                sb.append("\n\n");
+                System.out.println(sb.toString());
+            }
+        } catch (VisitException ve) {
             System.err.printf("Error during AST printing: look for error in your syntax\n");
         }
-        return "";
     }
 
     @Override
-    public String visitBinaryExpr(Binary expr) throws Expr.VisitException {
+    public String visitBinaryExpr(Binary expr) throws VisitException {
         nesting++;
         String str = parenthesize(expr.operator().lexeme(), expr.left(), expr.right());
         nesting--;
@@ -29,49 +35,57 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
-    public String visitGroupingExpr(Grouping expr) throws Expr.VisitException {
+    public String visitGroupingExpr(Grouping expr) throws VisitException {
         nesting++;
         String str = parenthesize("group", expr.expression());
         nesting--;
-        String nest = nesting > 0 ? ident.repeat(nesting - 1) : "";
-        return String.format("%s%s", nest, str);
+        return String.format("%s%s", ident.repeat(nesting), str);
     }
 
     @Override
-    public String visitLiteralExpr(Literal expr) throws Expr.VisitException {
-        nesting++;
-        String str = expr.value().toString();
-        nesting--;
-        String nest = nesting > 0 ? ident.repeat(nesting - 1) : "";
-        return String.format("%s%s", nest, str);
+    public String visitLiteralExpr(Literal expr) throws VisitException {
+        return String.format("%s%s", ident.repeat(nesting), expr.value().toString());
     }
 
     @Override
-    public String visitUnaryExpr(Unary expr) throws Expr.VisitException {
+    public String visitUnaryExpr(Unary expr) throws VisitException {
         nesting++;
         String str = parenthesize(expr.operator().lexeme(), expr.right());
         nesting--;
-        String nest = nesting > 0 ? ident.repeat(nesting - 1) : "";
-        return String.format("%s%s", nest, str);
+        return String.format("%s%s", ident.repeat(nesting), str);
 
     }
 
-    private String parenthesize(String name, Expr... exprs) throws Expr.VisitException {
+    private String parenthesize(String name, Expr... exprs) throws VisitException {
         String nest = ident.repeat(nesting);
-        StringBuilder builder = new StringBuilder(String.format("(%s\n%s", name, nest));
+        StringBuilder builder = new StringBuilder(String.format("%s(%s\n", nest, name));
 
+        nesting++;
         for (int i = 0; i < exprs.length; i++) {
-            nesting++;
             builder.append(Expr.accept(exprs[i], this));
-            nesting--;
             if (i == exprs.length - 1) {
-                builder.append(")");
+                builder.append(")\n");
             } else {
-                builder.append(String.format("\n%s", nest));
+                builder.append("\n");
             }
         }
+        nesting--;
 
         return builder.toString();
+    }
+    @Override
+    public String visitExpressionStmt(Expression stmt) throws VisitException {
+        nesting++;
+        String str =  String.format("%s(expr-stmt %s)", ident.repeat(nesting), stmt.toString());
+        nesting--;
+        return str;
+    }
+    @Override
+    public String visitPrintStmt(Print stmt) throws VisitException {
+        nesting++;
+        String str = String.format("%s(print %s)", ident.repeat(nesting), stmt.toString());
+        nesting--;
+        return str;
     }
 
 }

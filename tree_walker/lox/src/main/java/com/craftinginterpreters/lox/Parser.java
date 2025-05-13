@@ -3,7 +3,8 @@ package com.craftinginterpreters.lox;
 import static com.craftinginterpreters.lox.TokenType.*;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 
 public class Parser {
@@ -24,16 +25,38 @@ public class Parser {
     //////////////////////////
     // Parsing Verbs - LALR //
     //////////////////////////
-    public Optional<Expr> parse() {
-        if (exhausted)
-            throw new IllegalStateException("[PANIC] AST already generated, parser consumed.");
+    public List<Stmt> parse() {
+        if (exhausted) {
+            throw new IllegalStateException("Parser already consumed");
+        }
+        List<Stmt> statements = new ArrayList<>();
         try {
-            return Optional.of(expression());
-        } catch (ParseException pe) {
-            return Optional.empty();
+            while (!isAtEnd()) {
+                statements.add(statement());
+            }
+        } catch(ParseException pe) {
+            return Collections.emptyList();
         } finally {
             exhausted = true;
         }
+        return List.<Stmt>copyOf(statements);
+    }
+
+    private Stmt statement() throws ParseException {
+        if (match(PRINT)) return printStatement();
+        return expressionStatement();
+    }
+
+    private Stmt printStatement() throws ParseException {
+       Expr value = expression();
+       consume(SEMICOLON, "Expect ';' after value.");
+       return new Print(value);
+    }
+
+    private Stmt expressionStatement() throws ParseException {
+        Expr expr = expression();
+        consume(SEMICOLON, "Expect ';' after value.");
+        return new Expression(expr);
     }
 
     private Expr expression() throws ParseException {
