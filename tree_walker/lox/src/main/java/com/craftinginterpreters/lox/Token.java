@@ -14,4 +14,5 @@ public record Token(TokenType type, String lexeme, Optional<LoxValue> literal, i
     sb.append(String.format(", line: %d }", line));
     return sb.toString();
   }
+
 }

@@ -1,0 +1,21 @@
+#+title: Readme
+
+Shit that I always forget, basically all shit about maven.
+* Compile
+If I don't put the ~clean~ it use the cache for compilation (WTF?).
+#+begin_src bash
+mvn clean compile
+#+end_src
+* Run
+Run the executable.
+#+begin_src bash
+mvn clean compile exec:java@run
+#+end_src
+* Run with command arguments
+#+begin_src bash
+mvn clean compile exec:java@run -Dexec.args="path"
+#+end_src
+* Run tests
+#+begin_src bash
+mvn test
+#+end_src

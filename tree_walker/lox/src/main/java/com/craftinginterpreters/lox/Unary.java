@@ -1,3 +1,0 @@
-package com.craftinginterpreters.lox;
-
-public record Unary(Token operator, Expr right) implements Expr { }

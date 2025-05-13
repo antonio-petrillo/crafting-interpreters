@@ -1,3 +1,0 @@
-package com.craftinginterpreters.lox;
-
-public record Literal(LoxValue value) implements Expr { }

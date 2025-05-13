@@ -1,3 +1,0 @@
-package com.craftinginterpreters.lox;
-
-public record Binary(Expr left, Token operator, Expr right) implements Expr { }

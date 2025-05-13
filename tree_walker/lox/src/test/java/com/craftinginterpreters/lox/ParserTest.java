@@ -2,6 +2,8 @@ package com.craftinginterpreters.lox;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static com.craftinginterpreters.lox.TokenType.*;
+import static com.craftinginterpreters.lox.Stmt.*;
+import static com.craftinginterpreters.lox.Expr.*;
 
 import org.junit.jupiter.api.Test;
 
@@ -149,4 +151,5 @@ public class ParserTest {
 
         testParserGivenSource(List.<Stmt>of(new Print(expected1), new Expression(expected2)), sourceCode);
     }
+
 }

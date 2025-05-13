@@ -2,8 +2,15 @@ package com.craftinginterpreters.lox;
 
 import java.util.List;
 
+import com.craftinginterpreters.lox.Expr.Variable;
+import com.craftinginterpreters.lox.Stmt.Block;
+
+import static com.craftinginterpreters.lox.Expr.*;
+import static com.craftinginterpreters.lox.Stmt.*;
+
 public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
     private Lox lox;
+    private Environment environment = new Environment();
 
     public Interpreter(Lox lox) {
         this.lox = lox;
@@ -139,6 +146,51 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
         LoxValue value = evaluate(stmt.expression());
         System.out.println(value.toString());
         return null;
+    }
+
+    @Override
+    public Void visitVarStmt(Var stmt) throws VisitException {
+        LoxValue value = evaluate(stmt.initializer());
+        environment.define(stmt.name().lexeme(), value);
+        return null;
+    }
+
+    @Override
+    public LoxValue visitVariableExpr(Variable expr) throws VisitException {
+        try {
+            return environment.get(expr.name());
+        } catch (EnvironmentException ee) {
+            throw new VisitException(String.format("Undefined variable: %s.", expr.name()));
+        }
+    }
+
+    @Override
+    public LoxValue visitAssignExpr(Assign expr) throws VisitException {
+        LoxValue value = evaluate(expr.value());
+        try {
+            environment.assign(expr.name(), value);
+        } catch (EnvironmentException ee) {
+            throw new VisitException(String.format("Undefined variable name: %s.", expr.name()));
+        }
+        return value;
+    }
+
+   @Override
+   public Void visitBlockStmt(Block stmt) throws VisitException {
+       executeBlock(stmt.statements(), new Environment(environment));
+       return null;
+   }
+
+    void executeBlock(List<Stmt> statements, Environment env) throws VisitException {
+        Environment prev = this.environment;
+        try {
+            this.environment = env;
+            for (Stmt stmt : statements) {
+               execute(stmt);
+            }
+        } finally {
+            this.environment = prev;
+        }
     }
 
 }

@@ -64,8 +64,6 @@ public class Lox {
             Parser parser = new Parser(this, tokens);
             List<Stmt> program = parser.parse();
 
-            new AstPrinter().print(program);
-
             if (hadError) {
                 System.err.printf("");
                 return;

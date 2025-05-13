@@ -1,6 +1,8 @@
 package com.craftinginterpreters.lox;
 
 import static com.craftinginterpreters.lox.TokenType.*;
+import static com.craftinginterpreters.lox.Expr.*;
+import static com.craftinginterpreters.lox.Stmt.*;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -32,9 +34,10 @@ public class Parser {
         List<Stmt> statements = new ArrayList<>();
         try {
             while (!isAtEnd()) {
-                statements.add(statement());
+                statements.add(declaration());
             }
         } catch(ParseException pe) {
+            synchronize();
             return Collections.emptyList();
         } finally {
             exhausted = true;
@@ -42,8 +45,26 @@ public class Parser {
         return List.<Stmt>copyOf(statements);
     }
 
+    private Stmt declaration() throws ParseException {
+        if(match(VAR))
+            return varDeclaration();
+        return statement();
+    }
+
+    private Stmt varDeclaration() throws ParseException {
+        Token name = consume(IDENTIFIER, "Expect variable name.");
+        Expr initializer = new Literal(LoxValue.Intern.NIL);
+        if (match(EQUAL)) {
+            initializer = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after variable declaration.");
+        return new Var(name, initializer);
+    }
+
     private Stmt statement() throws ParseException {
         if (match(PRINT)) return printStatement();
+        if (match(LEFT_BRACE)) return new Block(block());
+
         return expressionStatement();
     }
 
@@ -59,8 +80,34 @@ public class Parser {
         return new Expression(expr);
     }
 
+    private List<Stmt> block() throws ParseException {
+        List<Stmt> statements = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+        consume(RIGHT_BRACE, "Expect '}' after block.");
+        return List.<Stmt>copyOf(statements);
+
+    }
+
     private Expr expression() throws ParseException {
-        return equality();
+        return assignment();
+    }
+
+    private Expr assignment() throws ParseException {
+        Expr expr = equality();
+        if (match(EQUAL)) {
+            Token equals = previous;
+            Expr value = assignment();
+
+            if(expr instanceof Variable v) {
+                return new Assign(v.name(), value);
+            }
+
+            throw error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private Expr equality() throws ParseException {
@@ -132,6 +179,9 @@ public class Parser {
         if (match(NUMBER, STRING))
             return new Literal(previous.literal().get());
 
+        if (match(IDENTIFIER))
+            return new Variable(previous);
+
         if (match(LEFT_PAREN)) {
            Expr expr = expression();
            consume(RIGHT_PAREN, "Expecte ')' after expression.");
@@ -192,24 +242,32 @@ public class Parser {
     }
 
     private void synchronize() {
-        advance();
-
-        while(!isAtEnd()) {
-            if (previous.type() == SEMICOLON) return;
-
-            switch (peek().type()) {
-               case CLASS:
-               case FUN:
-               case VAR:
-               case FOR:
-               case IF:
-               case WHILE:
-               case PRINT:
-               case RETURN:
-                   return;
-            }
-
+        try {
             advance();
+
+            while (!isAtEnd()) {
+                if (previous.type() == SEMICOLON)
+                    return;
+
+                switch (peek().type()) {
+                    case CLASS:
+                    case FUN:
+                    case VAR:
+                    case FOR:
+                    case IF:
+                    case WHILE:
+                    case PRINT:
+                    case RETURN:
+                        return;
+                    default:
+                }
+
+                advance();
+            }
+        } catch (IllegalStateException e) {
+            if (!e.getMessage().equals("Nothing to consume, parse goes out of bound.")) {
+                throw e;
+            }
         }
     }
 }
