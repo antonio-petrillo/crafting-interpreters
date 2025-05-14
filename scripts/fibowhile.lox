@@ -1,0 +1,9 @@
+var x = 0;
+var y = 1;
+while (y < 100000) {
+    print "fib := ";
+    print y;
+    var tmp = x + y;
+    x = y;
+    y = tmp;
+}
