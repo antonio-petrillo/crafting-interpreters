@@ -2,6 +2,7 @@ package com.craftinginterpreters.lox;
 
 import java.util.List;
 
+import static com.craftinginterpreters.lox.TokenType.*;
 import static com.craftinginterpreters.lox.Expr.*;
 import static com.craftinginterpreters.lox.Stmt.*;
 
@@ -204,6 +205,28 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
             execute(stmt.thenBranch());
         } else if (!stmt.elseBranch().isEmpty()) {
             execute(stmt.elseBranch().get());
+        }
+        return null;
+    }
+
+    @Override
+    public LoxValue visitLogicalExpr(Logical expr) throws VisitException {
+        LoxValue left = evaluate(expr.left());
+
+
+        if (expr.operator().type() == OR) {
+            if(isTruthyValue(left)) return left;
+        } else {
+            if(!isTruthyValue(left)) return left;
+        }
+
+        return evaluate(expr.right());
+    }
+
+    @Override
+    public Void visitWhileStmt(While stmt) throws VisitException {
+        while (isTruthyValue(evaluate(stmt.condition()))) {
+            execute(stmt.body());
         }
         return null;
     }

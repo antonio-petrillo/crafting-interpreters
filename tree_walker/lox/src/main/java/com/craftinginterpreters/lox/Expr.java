@@ -6,7 +6,8 @@ public sealed interface Expr permits
 	Expr.Literal,
 	Expr.Unary,
 	Expr.Variable,
-	Expr.Assign
+	Expr.Assign,
+	Expr.Logical
 {
 
 	public static record Binary(Expr left, Token operator, Expr right) implements Expr { }
@@ -15,6 +16,7 @@ public sealed interface Expr permits
 	public static record Unary(Token operator, Expr right) implements Expr { }
 	public static record Variable(Token name) implements Expr { }
 	public static record Assign(Token name, Expr value) implements Expr { }
+	public static record Logical(Expr left, Token operator, Expr right) implements Expr { }
 
 	public interface Visitor<T> {
 		public T visitBinaryExpr(Binary expr) throws VisitException;
@@ -23,6 +25,7 @@ public sealed interface Expr permits
 		public T visitUnaryExpr(Unary expr) throws VisitException;
 		public T visitVariableExpr(Variable expr) throws VisitException;
 		public T visitAssignExpr(Assign expr) throws VisitException;
+		public T visitLogicalExpr(Logical expr) throws VisitException;
 	}
 
 	public static <T> T accept(Expr expr, Visitor<T> v) throws VisitException {
@@ -33,6 +36,7 @@ public sealed interface Expr permits
 			case Unary e -> v.visitUnaryExpr(e);
 			case Variable e -> v.visitVariableExpr(e);
 			case Assign e -> v.visitAssignExpr(e);
+			case Logical e -> v.visitLogicalExpr(e);
 			default -> throw new VisitException("Unknown Expr");
 		};
 	}

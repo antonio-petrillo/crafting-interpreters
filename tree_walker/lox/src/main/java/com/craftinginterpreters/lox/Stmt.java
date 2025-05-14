@@ -8,7 +8,8 @@ public sealed interface Stmt permits
     Stmt.Print,
     Stmt.Var,
     Stmt.Block,
-    Stmt.If
+    Stmt.If,
+    Stmt.While
 {
 
     public static record Expression(Expr expression) implements Stmt {  }
@@ -16,6 +17,7 @@ public sealed interface Stmt permits
     public static record Print(Expr expression) implements Stmt {  }
     public static record Block(List<Stmt> statements) implements Stmt {  }
     public static record If(Expr condition, Stmt thenBranch, Optional<Stmt> elseBranch) implements Stmt {  }
+    public static record While(Expr condition, Stmt body) implements Stmt {  }
 
     public interface Visitor<T> {
         T visitExpressionStmt(Expression stmt) throws VisitException;
@@ -23,6 +25,7 @@ public sealed interface Stmt permits
         T visitVarStmt(Var stmt) throws VisitException;
         T visitBlockStmt(Block stmt) throws VisitException;
         T visitIfStmt(If stmt) throws VisitException;
+        T visitWhileStmt(While stmt) throws VisitException;
     }
 
     public static <T> T accept(Stmt stmt, Visitor<T> v) throws VisitException {
@@ -32,6 +35,7 @@ public sealed interface Stmt permits
             case Var s -> v.visitVarStmt(s);
             case Block s -> v.visitBlockStmt(s);
             case If s -> v.visitIfStmt(s);
+            case While s -> v.visitWhileStmt(s);
             default -> throw new VisitException("Unknown Stmt");
         };
     }

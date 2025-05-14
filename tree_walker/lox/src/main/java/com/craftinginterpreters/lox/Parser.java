@@ -62,12 +62,57 @@ public class Parser {
         return new Var(name, initializer);
     }
 
+    private Stmt whileStatement() throws ParseException {
+        consume(LEFT_PAREN, "Expect '(' after 'while'.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ')' after 'while (condition'.");
+        Stmt body = statement();
+
+        return new While(condition, body);
+    }
+
     private Stmt statement() throws ParseException {
+        if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
+        if (match(WHILE)) return whileStatement();
         if (match(LEFT_BRACE)) return new Block(block());
 
         return expressionStatement();
+    }
+
+    private Stmt forStatement() throws ParseException {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.");
+        Optional<Stmt> initializer = Optional.empty();
+        if (match(SEMICOLON))
+            initializer = Optional.empty();
+        else if (match(VAR))
+            initializer = Optional.of(varDeclaration());
+        else
+            initializer = Optional.of(expressionStatement());
+
+        Expr condition = new Literal(LoxValue.Intern.TRUE);
+        if (!check(SEMICOLON)) {
+            condition = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after 'for (init?; cond '.");
+        Optional<Expr> increment = Optional.empty();
+        if (!check(RIGHT_PAREN)) {
+            increment = Optional.of(expression());
+        }
+        consume(RIGHT_PAREN, "Expect ')' after 'for (init?; cond?; incr?'.");
+        Stmt body = statement();
+
+
+        if(!increment.isEmpty())
+            body = new Block(List.<Stmt>of(body, new Expression(increment.get())));
+
+        Stmt whileDesugar = new While(condition, body);
+
+        if(!initializer.isEmpty())
+            whileDesugar = new Block(List.<Stmt>of(initializer.get(), whileDesugar));
+
+        return whileDesugar;
     }
 
     private Stmt ifStatement() throws ParseException {
@@ -110,7 +155,7 @@ public class Parser {
     }
 
     private Expr assignment() throws ParseException {
-        Expr expr = equality();
+        Expr expr = or();
         if (match(EQUAL)) {
             Token equals = previous;
             Expr value = assignment();
@@ -120,6 +165,28 @@ public class Parser {
             }
 
             throw error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
+    }
+
+    private Expr or() throws ParseException {
+        Expr expr = and();
+        while(match(OR)) {
+            Token operator = previous;
+            Expr right = and();
+            expr = new Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr and() throws ParseException {
+        Expr expr = equality();
+        while(match(AND)) {
+            Token operator = previous;
+            Expr right = equality();
+            expr = new Logical(expr, operator, right);
         }
 
         return expr;
