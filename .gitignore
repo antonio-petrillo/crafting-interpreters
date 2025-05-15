@@ -3,7 +3,6 @@
 *.log
 tmp/
 target/
-.mvn/
 .classpath
 .project
 .settings/

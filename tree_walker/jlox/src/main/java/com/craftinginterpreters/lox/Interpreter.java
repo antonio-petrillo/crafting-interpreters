@@ -1,14 +1,20 @@
 package com.craftinginterpreters.lox;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import com.craftinginterpreters.lox.Stmt.Function;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 import static com.craftinginterpreters.lox.Expr.*;
 import static com.craftinginterpreters.lox.Stmt.*;
 
 public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
+
     private Lox lox;
-    private Environment environment = new Environment();
+    private final Environment globals = new Environment();
+    private Environment environment = globals;
 
     public Interpreter(Lox lox) {
         this.lox = lox;
@@ -29,6 +35,8 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
                     yield new LoxNum(l.num() + r.num());
                 } else if (left instanceof LoxStr l && right instanceof LoxStr r) {
                     yield new LoxStr(String.format("%s%s", l.str(), r.str()));
+                } else if (left instanceof LoxStr l && right instanceof LoxNum r) {
+                    yield new LoxStr(String.format("%s%f", l.str(), r.num()));
                 }
                 throw new VisitException("Mismateched type, in PLUS both operand must be both str or both num");
             }
@@ -229,6 +237,41 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
             execute(stmt.body());
         }
         return null;
+    }
+
+    @Override
+    public LoxValue visitCallExpr(Call expr) throws VisitException {
+        LoxValue callee = evaluate(expr.callee());
+        // I fucking hate the fact that I can't use the stream.map because my lambda throws.
+        // I understand the why, but still, fuck you java.
+        // List<LoxValue> arguments = expr.arguments()
+        //     .stream()
+        //     .map(e -> evaluate(e))
+        //     .toList();
+        List<LoxValue> arguments = new ArrayList<>();
+        for(Expr e : expr.arguments()) {
+            arguments.add(evaluate(e));
+        }
+
+        Optional<LoxCallable> maybeFunction = Optional.empty();
+        if (callee instanceof LoxCallable lc) {
+            maybeFunction = Optional.of(lc);
+        }
+        if (maybeFunction.isEmpty()) {
+            throw new VisitException(String.format("ERR: %s is not callable.", callee.toString()));
+        }
+        LoxCallable function = maybeFunction.get();
+        if (function.arity() != arguments.size()) {
+            throw new VisitException(String.format("ERR: %s require %d arguments, received %d.", callee.toString(), function.arity(), arguments.size()));
+        }
+
+        return function.call(this, List.<LoxValue>copyOf(arguments));
+    }
+
+    @Override
+    public Void visitFunctionStmt(Function stmt) throws VisitException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitFunctionStmt'");
     }
 
 }

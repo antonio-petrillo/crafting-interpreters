@@ -12,6 +12,9 @@ import java.util.Iterator;
 
 public class Parser {
     private static class ParseException extends Exception {}
+    private static enum CallableKind {
+        FUNCTION, CLASS;
+    }
 
     private final Lox lox;
     private final Iterator<Token> tokens;
@@ -47,9 +50,18 @@ public class Parser {
     }
 
     private Stmt declaration() throws ParseException {
+        if(match(FUN))
+            return function(CallableKind.FUNCTION);
         if(match(VAR))
             return varDeclaration();
         return statement();
+    }
+
+    private Stmt function(CallableKind kind) throws ParseException {
+        Token name = consume(IDENTIFIER, STR."Expect \{kind} name.");
+        consume(LEFT_PAREN, STR."Expect '(' after \{kind} name.");
+
+        return null;
     }
 
     private Stmt varDeclaration() throws ParseException {
@@ -247,7 +259,34 @@ public class Parser {
             return new Unary(operator, right);
         }
 
-        return primary();
+        return call();
+    }
+
+    private Expr call() throws ParseException {
+        Expr expr = primary();
+        while(true) {
+            if (match(LEFT_PAREN))
+                expr = finishCall(expr);
+            else
+                break;
+        }
+
+        return expr;
+    }
+
+    private Expr finishCall(Expr callee) throws ParseException {
+        List<Expr> arguments = new ArrayList<>();
+        if (!check(RIGHT_PAREN))
+            do {
+                if(arguments.size() >= 0xff) {
+                    error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.add(expression());
+            } while(match(COMMA));
+
+        Token paren = consume(RIGHT_PAREN, "Expected ')' after function arguments.");
+
+        return new Call(callee, paren, List.<Expr>copyOf(arguments));
     }
 
     private Expr primary() throws ParseException {
