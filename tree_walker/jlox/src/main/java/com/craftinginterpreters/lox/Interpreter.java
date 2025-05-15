@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.craftinginterpreters.lox.Expr.Get;
 import com.craftinginterpreters.lox.Expr.Set;
+import com.craftinginterpreters.lox.Expr.Super;
 import com.craftinginterpreters.lox.Expr.This;
 
 import static com.craftinginterpreters.lox.TokenType.*;
@@ -318,13 +319,35 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitClassStmt(Stmt.Class stmt) throws VisitException {
+        Optional<LoxClass> superclass = Optional.empty();
+        Optional<Environment> toRestore = Optional.empty();
+        if(!stmt.superclass().isEmpty()) {
+            LoxValue value = evaluate(stmt.superclass().get());
+            if (value instanceof LoxClass clazz) {
+               superclass = Optional.of(clazz);
+            } else {
+                throw new VisitException(String.format("Superclass must be class."));
+            }
+        }
+
         environment.define(stmt.name().lexeme(), LoxValue.Intern.NIL);
+
+        if (!stmt.superclass().isEmpty()) {
+            toRestore = Optional.of(environment);
+            environment = new Environment(environment);
+            environment.define("super", superclass.get());
+        }
+
+
         Map<String, LoxFunction> methods = new HashMap<>();
         for(Function method : stmt.methods()) {
             LoxFunction fn = new LoxFunction(method, environment, method.name().lexeme().equals("init"));
             methods.put(method.name().lexeme(), fn);
         }
-        LoxClass clazz = new LoxClass(stmt.name().lexeme(), methods);
+        LoxClass clazz = new LoxClass(stmt.name().lexeme(), superclass, methods);
+        if (!superclass.isEmpty()) {
+           environment = toRestore.get();
+        }
         try {
             environment.assign(stmt.name(), clazz);
         } catch (EnvironmentException ee) {
@@ -365,6 +388,30 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
             return lookUpVariable(expr.keyword(), expr);
         } catch(EnvironmentException ee) {
             throw new VisitException("Keyword 'this' refer to a NIL object.");
+        }
+    }
+
+    @Override
+    public LoxValue visitSuperExpr(Super expr) throws VisitException {
+        int distance =locals.get(expr);
+        try {
+            LoxClass superclass = switch(environment.getAt(distance, "super")) {
+                case LoxClass clazz -> clazz;
+                default -> throw new VisitException("'LoxValue' at 'super' is not a 'LoxClass'.");
+            };
+
+            LoxInstance object = switch(environment.getAt(distance - 1, "this")) {
+                case LoxInstance instance -> instance;
+                default -> throw new VisitException("'LoxValue' ref at 'super' is not a 'LoxInstance'.");
+            };
+
+            LoxFunction method = superclass
+                .findMethod(expr.method().lexeme())
+                .orElseThrow(() -> new VisitException(String.format("Undefinted property '%s' of superclass.", expr.method().lexeme())));
+
+            return method.bind(object);
+        } catch (EnvironmentException ee) {
+            throw new VisitException("value nto found");
         }
     }
 

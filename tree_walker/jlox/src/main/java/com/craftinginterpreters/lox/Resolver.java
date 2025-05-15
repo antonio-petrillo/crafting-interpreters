@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.craftinginterpreters.lox.Expr.Get;
 import com.craftinginterpreters.lox.Expr.Set;
+import com.craftinginterpreters.lox.Expr.Super;
 import com.craftinginterpreters.lox.Expr.This;
 
 import java.util.HashMap;
@@ -30,7 +31,7 @@ public class Resolver implements Stmt.Visitor<Void>, Expr.Visitor<Void> {
     }
 
     private enum ClassType {
-        NONE, CLASS;
+        NONE, CLASS, SUBCLASS;
     }
 
     public void resolve(List<Stmt> stmts) {
@@ -240,6 +241,21 @@ public class Resolver implements Stmt.Visitor<Void>, Expr.Visitor<Void> {
         declare(stmt.name());
         define(stmt.name());
 
+        if (!stmt.superclass().isEmpty() && stmt.name().lexeme().equals(stmt.superclass().get().name().lexeme())) {
+            interpreter.getLox().error(stmt.superclass().get().name(), "A 'class' can't inherit from itself.");
+            return null;
+        }
+
+        if (!stmt.superclass().isEmpty()) {
+            currentClass = ClassType.SUBCLASS;
+            resolve(stmt.superclass().get());
+        }
+
+        if (!stmt.superclass().isEmpty()) {
+            beginScope();
+            scopes.peek().put("super", true);
+        }
+
         beginScope();
         scopes.peek().put("this", true);
 
@@ -251,6 +267,9 @@ public class Resolver implements Stmt.Visitor<Void>, Expr.Visitor<Void> {
             resolveFunction(fn, declaration);
         }
         endScope();
+        if (!stmt.superclass().isEmpty()) {
+            endScope();
+        }
 
         currentClass = enclosingClass;
         return null;
@@ -273,6 +292,20 @@ public class Resolver implements Stmt.Visitor<Void>, Expr.Visitor<Void> {
     public Void visitThisExpr(This expr) throws VisitException {
         if (currentClass == ClassType.NONE) {
             interpreter.getLox().error(expr.keyword(), "Can't use 'this' outside of a class.");
+            return null;
+        }
+
+        resolveLocal(expr, expr.keyword());
+        return null;
+    }
+
+    @Override
+    public Void visitSuperExpr(Super expr) throws VisitException {
+        if (currentClass == ClassType.NONE) {
+            interpreter.getLox().error(expr.keyword(), "Can't use 'super' outside of a class.");
+            return null;
+        } else if(currentClass != ClassType.SUBCLASS) {
+            interpreter.getLox().error(expr.keyword(), "Can't use 'super' in a class without superclass.");
             return null;
         }
 

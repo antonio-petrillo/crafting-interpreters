@@ -34,7 +34,7 @@ public sealed interface Stmt permits
             }
         }
     }
-    public static record Class(Token name, List<Stmt.Function> methods) implements Stmt {  }
+    public static record Class(Token name, Optional<Expr.Variable> superclass, List<Stmt.Function> methods) implements Stmt {  }
 
     public interface Visitor<T> {
         T visitExpressionStmt(Expression stmt) throws VisitException;

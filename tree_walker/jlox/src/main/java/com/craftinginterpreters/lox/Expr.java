@@ -13,7 +13,8 @@ public sealed interface Expr permits
 	Expr.Call,
 	Expr.Get,
 	Expr.Set,
-	Expr.This
+	Expr.This,
+	Expr.Super
 {
 
 	public static record Binary(Expr left, Token operator, Expr right) implements Expr { }
@@ -27,6 +28,7 @@ public sealed interface Expr permits
 	public static record Get(Expr obj, Token name) implements Expr { }
 	public static record Set(Expr obj, Token name, Expr value) implements Expr { }
 	public static record This(Token keyword) implements Expr { }
+	public static record Super(Token keyword, Token method) implements Expr { }
 
 	public interface Visitor<T> {
 		public T visitBinaryExpr(Binary expr) throws VisitException;
@@ -40,6 +42,7 @@ public sealed interface Expr permits
 		public T visitGetExpr(Get expr) throws VisitException;
 		public T visitSetExpr(Set expr) throws VisitException;
 		public T visitThisExpr(This expr) throws VisitException;
+		public T visitSuperExpr(Super expr) throws VisitException;
 	}
 
 	public static <T> T accept(Expr expr, Visitor<T> v) throws VisitException {
@@ -55,6 +58,7 @@ public sealed interface Expr permits
 			case Get e -> v.visitGetExpr(e);
 			case Set e -> v.visitSetExpr(e);
 			case This e -> v.visitThisExpr(e);
+			case Super e -> v.visitSuperExpr(e);
 			default -> throw new VisitException("Unknown Expr");
 		};
 	}

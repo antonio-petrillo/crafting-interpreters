@@ -59,7 +59,13 @@ public class Parser {
         return statement();
     }
     private Stmt classDeclaration() throws ParseException {
+        Optional<Variable> superclass = Optional.empty();
         Token name = consume(IDENTIFIER, "Expect class name after 'class'.");
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expect superclass name.");
+            superclass = Optional.of(new Variable(previous));
+        }
+
         consume(LEFT_BRACE, "Expect '{' before class body.");
         List<Function> methods = new ArrayList<>();
         while(!check(RIGHT_BRACE) && !isAtEnd()) {
@@ -68,7 +74,7 @@ public class Parser {
 
         consume(RIGHT_BRACE, "Expect '}' after class body.");
 
-        return new Stmt.Class(name, List.<Function>copyOf(methods));
+        return new Stmt.Class(name, superclass, methods);
     }
 
     private Function function(CallableKind kind) throws ParseException {
@@ -346,6 +352,13 @@ public class Parser {
 
         if (match(NUMBER, STRING))
             return new Literal(previous.literal().get());
+
+        if(match(SUPER)) {
+            Token keyword = previous;
+            consume(DOT, "Expect '.' after 'super'.");
+            Token method = consume(IDENTIFIER, "Expect superclass method name.");
+            return new Super(keyword, method);
+        }
 
         if(match(THIS))
             return new This(previous);

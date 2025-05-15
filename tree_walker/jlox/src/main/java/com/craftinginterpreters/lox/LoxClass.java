@@ -4,13 +4,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import java.util.function.Supplier;
+import java.util.function.Function;
+
 public final class LoxClass implements LoxValue, LoxCallable {
 
     private final String name;
     private final Map<String, LoxFunction> methods;
+    private final Optional<LoxClass> superclass;
 
-    public LoxClass(String name, Map<String, LoxFunction> methods) {
+    public LoxClass(String name, Optional<LoxClass> superclass, Map<String, LoxFunction> methods) {
         this.name = name;
+        this.superclass = superclass;
         this.methods = methods;
     }
 
@@ -19,7 +24,8 @@ public final class LoxClass implements LoxValue, LoxCallable {
     }
 
     public Optional<LoxFunction> findMethod(String name) {
-        return Optional.ofNullable(methods.get(name));
+        return Optional.ofNullable(methods.get(name))
+                .or(() -> superclass.map(cl -> cl.findMethod(name)).get());
     }
 
     @Override
