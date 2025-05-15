@@ -1,6 +1,13 @@
 package com.craftinginterpreters.lox;
 
-public sealed interface LoxValue permits LoxStr, LoxNum, LoxValue.Intern, LoxCallable {
+public sealed interface LoxValue permits
+    LoxStr,
+    LoxNum,
+    LoxValue.Intern,
+    LoxCallable,
+    LoxClass,
+    LoxInstance
+{
 
     public static enum Intern implements LoxValue {
         NIL, FALSE, TRUE;

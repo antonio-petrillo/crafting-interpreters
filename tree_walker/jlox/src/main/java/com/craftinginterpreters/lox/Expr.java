@@ -10,7 +10,10 @@ public sealed interface Expr permits
 	Expr.Variable,
 	Expr.Assign,
 	Expr.Logical,
-	Expr.Call
+	Expr.Call,
+	Expr.Get,
+	Expr.Set,
+	Expr.This
 {
 
 	public static record Binary(Expr left, Token operator, Expr right) implements Expr { }
@@ -21,6 +24,9 @@ public sealed interface Expr permits
 	public static record Assign(Token name, Expr value) implements Expr { }
 	public static record Logical(Expr left, Token operator, Expr right) implements Expr { }
 	public static record Call(Expr callee, Token paren, List<Expr> arguments) implements Expr { }
+	public static record Get(Expr obj, Token name) implements Expr { }
+	public static record Set(Expr obj, Token name, Expr value) implements Expr { }
+	public static record This(Token keyword) implements Expr { }
 
 	public interface Visitor<T> {
 		public T visitBinaryExpr(Binary expr) throws VisitException;
@@ -31,6 +37,9 @@ public sealed interface Expr permits
 		public T visitAssignExpr(Assign expr) throws VisitException;
 		public T visitLogicalExpr(Logical expr) throws VisitException;
 		public T visitCallExpr(Call expr) throws VisitException;
+		public T visitGetExpr(Get expr) throws VisitException;
+		public T visitSetExpr(Set expr) throws VisitException;
+		public T visitThisExpr(This expr) throws VisitException;
 	}
 
 	public static <T> T accept(Expr expr, Visitor<T> v) throws VisitException {
@@ -43,6 +52,9 @@ public sealed interface Expr permits
 			case Assign e -> v.visitAssignExpr(e);
 			case Logical e -> v.visitLogicalExpr(e);
 			case Call e -> v.visitCallExpr(e);
+			case Get e -> v.visitGetExpr(e);
+			case Set e -> v.visitSetExpr(e);
+			case This e -> v.visitThisExpr(e);
 			default -> throw new VisitException("Unknown Expr");
 		};
 	}

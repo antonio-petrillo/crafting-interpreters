@@ -1,9 +1,12 @@
 package com.craftinginterpreters.lox;
 
-import static com.craftinginterpreters.lox.TokenType.*;
-
 import java.util.List;
 import java.util.Map;
+
+import com.craftinginterpreters.lox.Expr.Get;
+import com.craftinginterpreters.lox.Expr.Set;
+import com.craftinginterpreters.lox.Expr.This;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Deque;
@@ -16,13 +19,18 @@ public class Resolver implements Stmt.Visitor<Void>, Expr.Visitor<Void> {
     private final Interpreter interpreter;
     private final Deque<Map<String, Boolean>> scopes = new ArrayDeque<>();
     private FunctionType currentFunction = FunctionType.NONE;
+    private ClassType currentClass = ClassType.NONE;
 
     public Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
     }
 
     private enum FunctionType {
-        NONE, FUNCTION;
+        NONE, FUNCTION, METHOD, INITIALIZER;
+    }
+
+    private enum ClassType {
+        NONE, CLASS;
     }
 
     public void resolve(List<Stmt> stmts) {
@@ -48,7 +56,7 @@ public class Resolver implements Stmt.Visitor<Void>, Expr.Visitor<Void> {
     }
 
     private void resolveLocal(Expr expr, Token name) {
-       Iterator<Map<String, Boolean>> iter = scopes.descendingIterator();
+       Iterator<Map<String, Boolean>> iter = scopes.iterator();
        for (int i = scopes.size() - 1; i >= 0; i--) {
            // no need to check for iter.hasNext()
            Map<String, Boolean> scope = iter.next();
@@ -122,7 +130,7 @@ public class Resolver implements Stmt.Visitor<Void>, Expr.Visitor<Void> {
 
     @Override
     public Void visitVariableExpr(Variable expr) throws VisitException {
-        if (!scopes.isEmpty() && !scopes.peek().getOrDefault(expr.name().lexeme(), false)) {
+        if (!scopes.isEmpty() && scopes.peek().get(expr.name().lexeme()) == Boolean.FALSE) {
            interpreter.getLox().error(expr.name(), "Can't read local variable in its own initializer.");
         }
         resolveLocal(expr, expr.name());
@@ -215,8 +223,60 @@ public class Resolver implements Stmt.Visitor<Void>, Expr.Visitor<Void> {
         }
 
         if(!stmt.value().isEmpty()) {
+            if(currentFunction == FunctionType.INITIALIZER) {
+                interpreter.getLox().error(stmt.keyword(), "Can't return a value from an initializer.");
+                return null;
+            }
+
             resolve(stmt.value().get());
         }
+        return null;
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) throws VisitException {
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
+        declare(stmt.name());
+        define(stmt.name());
+
+        beginScope();
+        scopes.peek().put("this", true);
+
+        for (Function fn : stmt.methods()) {
+            FunctionType declaration = FunctionType.METHOD;
+            if (fn.name().lexeme().equals("init"))
+                declaration = FunctionType.INITIALIZER;
+
+            resolveFunction(fn, declaration);
+        }
+        endScope();
+
+        currentClass = enclosingClass;
+        return null;
+    }
+
+    @Override
+    public Void visitGetExpr(Get expr) throws VisitException {
+        resolve(expr.obj());
+        return null;
+    }
+
+    @Override
+    public Void visitSetExpr(Set expr) throws VisitException {
+        resolve(expr.value());
+        resolve(expr.obj());
+        return null;
+    }
+
+    @Override
+    public Void visitThisExpr(This expr) throws VisitException {
+        if (currentClass == ClassType.NONE) {
+            interpreter.getLox().error(expr.keyword(), "Can't use 'this' outside of a class.");
+            return null;
+        }
+
+        resolveLocal(expr, expr.keyword());
         return null;
     }
 

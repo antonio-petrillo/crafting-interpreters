@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.craftinginterpreters.lox.Stmt.Function;
-import com.craftinginterpreters.lox.Stmt.Return;
+import com.craftinginterpreters.lox.Expr.Get;
+import com.craftinginterpreters.lox.Expr.Set;
+import com.craftinginterpreters.lox.Expr.This;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 import static com.craftinginterpreters.lox.Expr.*;
@@ -226,7 +227,7 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
        return null;
    }
 
-    void executeBlock(List<Stmt> statements, Environment env) throws VisitException {
+    public void executeBlock(List<Stmt> statements, Environment env) throws VisitException {
         Environment prev = this.environment;
         try {
             this.environment = env;
@@ -301,7 +302,7 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Function stmt) throws VisitException {
-        LoxFunction function = new LoxFunction(stmt, environment);
+        LoxFunction function = new LoxFunction(stmt, environment, false);
         environment.define(stmt.name().lexeme(), function);
         return null;
     }
@@ -313,6 +314,58 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
             retValue = evaluate(stmt.value().get());
 
         throw new Return.ReturnException(retValue);
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) throws VisitException {
+        environment.define(stmt.name().lexeme(), LoxValue.Intern.NIL);
+        Map<String, LoxFunction> methods = new HashMap<>();
+        for(Function method : stmt.methods()) {
+            LoxFunction fn = new LoxFunction(method, environment, method.name().lexeme().equals("init"));
+            methods.put(method.name().lexeme(), fn);
+        }
+        LoxClass clazz = new LoxClass(stmt.name().lexeme(), methods);
+        try {
+            environment.assign(stmt.name(), clazz);
+        } catch (EnvironmentException ee) {
+            throw new VisitException(String.format("Error defining %s, maybe it's already declared.", stmt.name().lexeme()));
+        }
+        return null;
+    }
+
+    @Override
+    public LoxValue visitGetExpr(Get expr) throws VisitException {
+        LoxValue obj = evaluate(expr.obj());
+        if (obj instanceof LoxInstance instance) {
+            try {
+                return instance.get(expr.name());
+            } catch (LoxInstance.InstanceException ie) {
+                throw new VisitException(ie.getMessage());
+            }
+        }
+        throw new VisitException(String.format("The %s is not applicable to given object.", expr.name()));
+    }
+
+    @Override
+    public LoxValue visitSetExpr(Set expr) throws VisitException {
+        LoxValue obj = evaluate(expr.obj());
+
+        if(obj instanceof LoxInstance instance) {
+            LoxValue value = evaluate(expr.value());
+            instance.set(expr.name(), value);
+            return value;
+        }
+
+        throw new VisitException("Setting property on non object instance value.");
+    }
+
+    @Override
+    public LoxValue visitThisExpr(This expr) throws VisitException {
+        try {
+            return lookUpVariable(expr.keyword(), expr);
+        } catch(EnvironmentException ee) {
+            throw new VisitException("Keyword 'this' refer to a NIL object.");
+        }
     }
 
 }

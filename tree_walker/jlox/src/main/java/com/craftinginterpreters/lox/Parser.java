@@ -50,16 +50,30 @@ public class Parser {
     }
 
     private Stmt declaration() throws ParseException {
+        if(match(CLASS))
+            return classDeclaration();
         if(match(FUN))
             return function(CallableKind.FUNCTION);
         if(match(VAR))
             return varDeclaration();
         return statement();
     }
+    private Stmt classDeclaration() throws ParseException {
+        Token name = consume(IDENTIFIER, "Expect class name after 'class'.");
+        consume(LEFT_BRACE, "Expect '{' before class body.");
+        List<Function> methods = new ArrayList<>();
+        while(!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(function(CallableKind.CLASS));
+        }
 
-    private Stmt function(CallableKind kind) throws ParseException {
-        Token name = consume(IDENTIFIER, STR."Expect \{kind} name.");
-        consume(LEFT_PAREN, STR."Expect '(' after \{kind} name.");
+        consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new Stmt.Class(name, List.<Function>copyOf(methods));
+    }
+
+    private Function function(CallableKind kind) throws ParseException {
+        Token name = consume(IDENTIFIER, String.format("Expect %s name.", kind));
+        consume(LEFT_PAREN, String.format("Expect '(' after %s name.", kind));
         List<Token> parameters = new ArrayList<>();
         if(!check(RIGHT_PAREN)) {
             do {
@@ -71,7 +85,7 @@ public class Parser {
         }
         consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
-        consume(LEFT_BRACE, STR."Expect '{' before \{kind} body.");
+        consume(LEFT_BRACE, String.format("Expect '{' before %s body.", kind));
         List<Stmt> body = block();
 
         return new Function(name,
@@ -201,6 +215,8 @@ public class Parser {
 
             if(expr instanceof Variable v) {
                 return new Assign(v.name(), value);
+            } else if (expr instanceof Get get) {
+                return new Set(get.obj(), get.name(), value);
             }
 
             throw error(equals, "Invalid assignment target.");
@@ -294,6 +310,10 @@ public class Parser {
         while(true) {
             if (match(LEFT_PAREN))
                 expr = finishCall(expr);
+            else if(match(DOT)) {
+                Token name = consume(IDENTIFIER, "Expect property name '%s.'.");
+                expr = new Get(expr, name);
+            }
             else
                 break;
         }
@@ -326,6 +346,9 @@ public class Parser {
 
         if (match(NUMBER, STRING))
             return new Literal(previous.literal().get());
+
+        if(match(THIS))
+            return new This(previous);
 
         if (match(IDENTIFIER))
             return new Variable(previous);

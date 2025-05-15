@@ -11,7 +11,8 @@ public sealed interface Stmt permits
     Stmt.If,
     Stmt.While,
     Stmt.Function,
-    Stmt.Return
+    Stmt.Return,
+    Stmt.Class
 {
 
     public static record Expression(Expr expression) implements Stmt {  }
@@ -33,6 +34,7 @@ public sealed interface Stmt permits
             }
         }
     }
+    public static record Class(Token name, List<Stmt.Function> methods) implements Stmt {  }
 
     public interface Visitor<T> {
         T visitExpressionStmt(Expression stmt) throws VisitException;
@@ -43,6 +45,7 @@ public sealed interface Stmt permits
         T visitWhileStmt(While stmt) throws VisitException;
         T visitFunctionStmt(Function stmt) throws VisitException;
         T visitReturnStmt(Return stmt) throws VisitException;
+        T visitClassStmt(Stmt.Class stmt) throws VisitException;
     }
 
     public static <T> T accept(Stmt stmt, Visitor<T> v) throws VisitException {
@@ -55,6 +58,7 @@ public sealed interface Stmt permits
             case While s -> v.visitWhileStmt(s);
             case Function s -> v.visitFunctionStmt(s);
             case Return s -> v.visitReturnStmt(s);
+            case Stmt.Class s -> v.visitClassStmt(s);
             default -> throw new VisitException("Unknown Stmt");
         };
     }

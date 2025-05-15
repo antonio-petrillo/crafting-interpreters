@@ -166,7 +166,7 @@ public class ParserTest {
         String sourceCode = "var a = 1;";
         Expr one = new Literal(new LoxNum(1));
         Token a = new Token(IDENTIFIER, "a",Optional.empty(), 1);
-        List<Stmt> expected = List.<Stmt>of(new Var(a, one));
+        List<Stmt> expected = List.<Stmt>of(new Var(a, Optional.of(one)));
 
         testParserGivenSource(expected, sourceCode);
     }
@@ -178,7 +178,7 @@ public class ParserTest {
         Expr two = new Literal(new LoxNum(2));
         Token a = new Token(IDENTIFIER, "a",Optional.empty(), 1);
         Assign assign = new Assign(a, two);
-        List<Stmt> expected = List.<Stmt>of(new Var(a, one), new Expression(assign));
+        List<Stmt> expected = List.<Stmt>of(new Var(a, Optional.of(one)), new Expression(assign));
 
         testParserGivenSource(expected, sourceCode);
     }
