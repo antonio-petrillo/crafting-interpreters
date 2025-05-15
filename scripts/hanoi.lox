@@ -1,0 +1,22 @@
+fun hanoi(n, a, b, c) {
+    if (n == 1) {
+        print "move 1 from " + a + " to " + b + ".";
+        return;
+    }
+    hanoi(n - 1, a, c, b);
+    print "Move " + n + " from " + a + " to " + b + ".";
+    hanoi(n - 1, c, b, a);
+}
+
+print "Run with 3";
+hanoi(3, "A", "B", "C");
+print "Run with 4";
+print "";
+hanoi(4, "A", "B", "C");
+print "";
+print "Run with 14";
+hanoi(14, "A", "B", "C");
+print "";
+print "Run with 22";
+hanoi(22, "A", "B", "C");
+print "";

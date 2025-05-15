@@ -1,0 +1,59 @@
+class Node {
+    init(val, tail) {
+        this.val = val;
+        this.tail = tail;
+    }
+
+    string() {
+        if (this.tail != nil) {
+            return " " + this.val + this.tail.string();
+        }
+        return "" + this.val + " ] end";
+    }
+}
+
+class List {
+    init() { this.head = nil; }
+
+    append(val) { this.head = Node(val, this.head); }
+
+    string() {
+        if (this.head == nil) {
+            return "[empty]";
+        }
+        return "start [" + this.head.string();
+    }
+
+    iter() {
+        var ptr = this.head;
+        fun realiter() {
+            if (ptr == nil or ptr.val == nil) {
+                print "iter next is := nil";
+                return false;
+            }
+            print "iter next is := " + ptr.val;
+            ptr = ptr.tail;
+            return true;
+        }
+
+        return realiter;
+    }
+}
+
+var l = List();
+print l.string();
+l.append("asdf");
+print l.string();
+l.append("hmm");
+print l.string();
+l.append(1.0);
+print l.string();
+l.append(-1);
+print l.string();
+l.append("42069");
+print l.string();
+
+var it = l.iter();
+while (it()) {
+}
+print "exhausted";

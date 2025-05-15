@@ -256,7 +256,7 @@ public class Parser {
     private Expr equality() throws ParseException {
         Expr expr = comparison();
 
-        while(match(BANG_EQUAL, BANG_EQUAL)) {
+        while(match(BANG_EQUAL, EQUAL_EQUAL)) {
             Token operator = previous;
             Expr right = comparison();
             expr = new Binary(expr, operator, right);
