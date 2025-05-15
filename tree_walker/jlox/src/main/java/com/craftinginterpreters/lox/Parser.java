@@ -81,9 +81,9 @@ public class Parser {
 
     private Stmt varDeclaration() throws ParseException {
         Token name = consume(IDENTIFIER, "Expect variable name.");
-        Expr initializer = new Literal(LoxValue.Intern.NIL);
+        Optional<Expr> initializer = Optional.empty();
         if (match(EQUAL)) {
-            initializer = expression();
+            initializer = Optional.of(expression());
         }
         consume(SEMICOLON, "Expect ';' after variable declaration.");
         return new Var(name, initializer);

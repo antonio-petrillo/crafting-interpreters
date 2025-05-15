@@ -10,7 +10,8 @@ public record LoxFunction(Function declaration, Environment closure) implements 
     @Override
         public LoxValue call(Interpreter interpreter, List<LoxValue> arguments) {
             if(declaration.params().size() != arguments.size()) {
-                throw new IllegalArgumentException(STR."Mismatched number of arguments in function call, expected \{declaration.params().size()}, got \{ arguments.size()}.");
+                String msg = String.format("Mismatched number of arguments in function call, expected %d, got %d.", declaration.params().size(), arguments.size());
+                throw new IllegalArgumentException(msg);
             }
             Environment env = new Environment(closure);
             Iterator<LoxValue> iter = arguments.iterator();
@@ -23,7 +24,8 @@ public record LoxFunction(Function declaration, Environment closure) implements 
             } catch(Return.ReturnException ret) {
                 return ret.getValue();
             } catch(VisitException ve) {
-                interpreter.getLox().error(declaration.name(), STR."Error in \{declaration.name().lexeme()} function call.");
+                String msg = String.format("Error in %d function call.", declaration.name().lexeme());
+                interpreter.getLox().error(declaration.name(), msg);
             }
             return LoxValue.Intern.NIL;
         }
@@ -35,6 +37,6 @@ public record LoxFunction(Function declaration, Environment closure) implements 
 
     @Override
         public String toString() {
-            return STR."<fn \{declaration.name().lexeme()}>.";
+            return String.format("<fn %s>.", declaration.name().lexeme());
         }
 }

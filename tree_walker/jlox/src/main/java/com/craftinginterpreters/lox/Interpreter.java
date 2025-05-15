@@ -1,7 +1,9 @@
 package com.craftinginterpreters.lox;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.craftinginterpreters.lox.Stmt.Function;
@@ -16,8 +18,9 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
     private final Lox lox;
 
     private final Environment globals = new Environment();
-
     private Environment environment = globals;
+
+    private final Map<Expr, Integer> locals = new HashMap<>();
 
     public Interpreter(Lox lox) {
         this.lox = lox;
@@ -29,6 +32,19 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
 
     public LoxValue evaluate(Expr expr) throws VisitException {
         return Expr.accept(expr, this);
+    }
+
+    public void resolve(Expr expr, int depth) {
+        locals.put(expr, depth);
+    }
+
+    private LoxValue lookUpVariable(Token name, Expr expr) throws  EnvironmentException {
+       Optional<Integer> distance = Optional.ofNullable(locals.get(expr));
+       if (!distance.isEmpty()) {
+           return environment.getAt(distance.get(), name.lexeme());
+       } else {
+           return globals.get(name);
+       }
     }
 
 	@Override
@@ -171,7 +187,10 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitVarStmt(Var stmt) throws VisitException {
-        LoxValue value = evaluate(stmt.initializer());
+        LoxValue value = LoxValue.Intern.NIL;
+        if (!stmt.initializer().isEmpty()) {
+           value = evaluate(stmt.initializer().get());
+        }
         environment.define(stmt.name().lexeme(), value);
         return null;
     }
@@ -179,7 +198,7 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
     @Override
     public LoxValue visitVariableExpr(Variable expr) throws VisitException {
         try {
-            return environment.get(expr.name());
+            return lookUpVariable(expr.name(), expr);
         } catch (EnvironmentException ee) {
             throw new VisitException(String.format("Undefined variable: %s.", expr.name()));
         }
@@ -189,7 +208,12 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
     public LoxValue visitAssignExpr(Assign expr) throws VisitException {
         LoxValue value = evaluate(expr.value());
         try {
-            environment.assign(expr.name(), value);
+            Optional<Integer> distance = Optional.ofNullable(locals.get(expr));
+            if (distance.isEmpty()) {
+                environment.assign(expr.name(), value);
+            } else {
+                environment.assignAt(distance.get(), expr.name(), value);
+            }
         } catch (EnvironmentException ee) {
             throw new VisitException(String.format("Undefined variable name: %s.", expr.name()));
         }

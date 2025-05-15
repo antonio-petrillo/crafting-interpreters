@@ -41,6 +41,10 @@ public class Environment {
         throw new EnvironmentException();
     }
 
+    public void assignAt(int distance, Token name, LoxValue value) throws EnvironmentException  {
+        ancestor(distance).values.put(name.lexeme(), value);
+    }
+
     public LoxValue get(Token name) throws EnvironmentException {
         if (values.containsKey(name.lexeme())) {
             return values.get(name.lexeme());
@@ -55,4 +59,15 @@ public class Environment {
         throw new EnvironmentException();
     }
 
+    public LoxValue getAt(int distance, String name) throws EnvironmentException {
+        return ancestor(distance).values.get(name);
+    }
+
+    private Environment ancestor(int distance) {
+       Environment env = this;
+       for (int i = 0; i < distance; i++) {
+          env = env.enclosing.get();
+       }
+       return env;
+    }
 }

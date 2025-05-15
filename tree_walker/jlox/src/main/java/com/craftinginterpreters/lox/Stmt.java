@@ -15,7 +15,7 @@ public sealed interface Stmt permits
 {
 
     public static record Expression(Expr expression) implements Stmt {  }
-    public static record Var(Token name, Expr initializer) implements Stmt {  }
+    public static record Var(Token name, Optional<Expr> initializer) implements Stmt {  }
     public static record Print(Expr expression) implements Stmt {  }
     public static record Block(List<Stmt> statements) implements Stmt {  }
     public static record If(Expr condition, Stmt thenBranch, Optional<Stmt> elseBranch) implements Stmt {  }

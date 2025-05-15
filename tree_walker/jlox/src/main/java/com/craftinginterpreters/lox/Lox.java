@@ -64,10 +64,14 @@ public class Lox {
             Parser parser = new Parser(this, tokens);
             List<Stmt> program = parser.parse();
 
+            Resolver resolver = new Resolver(interpreter);
+            resolver.resolve(program);
+
             if (hadError) {
                 System.err.printf("");
                 return;
             }
+
             interpreter.interpret(program);
         } catch (VisitException e) {
             runtimeError(e);
