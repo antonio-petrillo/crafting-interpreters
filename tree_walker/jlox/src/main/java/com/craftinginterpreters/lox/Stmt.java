@@ -10,7 +10,8 @@ public sealed interface Stmt permits
     Stmt.Block,
     Stmt.If,
     Stmt.While,
-    Stmt.Function
+    Stmt.Function,
+    Stmt.Return
 {
 
     public static record Expression(Expr expression) implements Stmt {  }
@@ -20,6 +21,18 @@ public sealed interface Stmt permits
     public static record If(Expr condition, Stmt thenBranch, Optional<Stmt> elseBranch) implements Stmt {  }
     public static record While(Expr condition, Stmt body) implements Stmt {  }
     public static record Function(Token name, List<Token> params, List<Stmt> body) implements Stmt {  }
+    public static record Return(Token keyword, Optional<Expr> value) implements Stmt {
+        public static class ReturnException extends VisitException {
+            private final LoxValue value;
+            public ReturnException(LoxValue value) {
+                super("");
+                this.value = value;
+            }
+            public LoxValue getValue() {
+                return this.value;
+            }
+        }
+    }
 
     public interface Visitor<T> {
         T visitExpressionStmt(Expression stmt) throws VisitException;
@@ -29,6 +42,7 @@ public sealed interface Stmt permits
         T visitIfStmt(If stmt) throws VisitException;
         T visitWhileStmt(While stmt) throws VisitException;
         T visitFunctionStmt(Function stmt) throws VisitException;
+        T visitReturnStmt(Return stmt) throws VisitException;
     }
 
     public static <T> T accept(Stmt stmt, Visitor<T> v) throws VisitException {
@@ -40,6 +54,7 @@ public sealed interface Stmt permits
             case If s -> v.visitIfStmt(s);
             case While s -> v.visitWhileStmt(s);
             case Function s -> v.visitFunctionStmt(s);
+            case Return s -> v.visitReturnStmt(s);
             default -> throw new VisitException("Unknown Stmt");
         };
     }

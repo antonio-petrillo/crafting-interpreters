@@ -60,8 +60,23 @@ public class Parser {
     private Stmt function(CallableKind kind) throws ParseException {
         Token name = consume(IDENTIFIER, STR."Expect \{kind} name.");
         consume(LEFT_PAREN, STR."Expect '(' after \{kind} name.");
+        List<Token> parameters = new ArrayList<>();
+        if(!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 0xff) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+            } while(match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
-        return null;
+        consume(LEFT_BRACE, STR."Expect '{' before \{kind} body.");
+        List<Stmt> body = block();
+
+        return new Function(name,
+                            List.<Token>copyOf(parameters),
+                            body);
     }
 
     private Stmt varDeclaration() throws ParseException {
@@ -87,6 +102,7 @@ public class Parser {
         if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
+        if (match(RETURN)) return returnStatement();
         if (match(WHILE)) return whileStatement();
         if (match(LEFT_BRACE)) return new Block(block());
 
@@ -144,6 +160,17 @@ public class Parser {
        Expr value = expression();
        consume(SEMICOLON, "Expect ';' after value.");
        return new Print(value);
+    }
+
+    private Stmt returnStatement() throws ParseException {
+        Token keyword = previous;
+        Optional<Expr> value = Optional.empty();
+        if (!check(SEMICOLON)) {
+            value = Optional.of(expression());
+        }
+        consume(SEMICOLON, "Expecte ';' after return value.");
+
+        return new Return(keyword, value);
     }
 
     private Stmt expressionStatement() throws ParseException {

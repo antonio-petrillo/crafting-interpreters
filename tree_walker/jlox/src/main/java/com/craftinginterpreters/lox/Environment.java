@@ -11,24 +11,7 @@ public class Environment {
     private final Optional<Environment> enclosing;
 
     private static final Map<String, LoxCallable> builtins = Map.ofEntries(
-            Map.<String,LoxCallable>entry("clock", new LoxCallable() {
-
-                @Override
-                public LoxValue call(Interpreter interpreter, List<LoxValue> arguments) {
-                    return new LoxNum(System.currentTimeMillis() / 1000.);
-                }
-
-                @Override
-                public int arity() {
-                    return 0;
-                }
-
-                @Override
-                public String toString() {
-                    return "<native fn: clock>";
-                }
-
-            }));
+            Map.<String,LoxCallable>entry("clock", LoxClockBuiltin.fn));
 
     public Environment() {
         this.enclosing = Optional.empty();

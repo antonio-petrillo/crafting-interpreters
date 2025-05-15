@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.craftinginterpreters.lox.Stmt.Function;
+import com.craftinginterpreters.lox.Stmt.Return;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 import static com.craftinginterpreters.lox.Expr.*;
@@ -12,12 +13,18 @@ import static com.craftinginterpreters.lox.Stmt.*;
 
 public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
 
-    private Lox lox;
+    private final Lox lox;
+
     private final Environment globals = new Environment();
+
     private Environment environment = globals;
 
     public Interpreter(Lox lox) {
         this.lox = lox;
+    }
+
+    public Lox getLox() {
+        return lox;
     }
 
     public LoxValue evaluate(Expr expr) throws VisitException {
@@ -270,8 +277,18 @@ public class Interpreter implements Expr.Visitor<LoxValue>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Function stmt) throws VisitException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitFunctionStmt'");
+        LoxFunction function = new LoxFunction(stmt, environment);
+        environment.define(stmt.name().lexeme(), function);
+        return null;
+    }
+
+    @Override
+    public Void visitReturnStmt(Return stmt) throws VisitException {
+        LoxValue retValue = LoxValue.Intern.NIL;
+        if (!stmt.value().isEmpty())
+            retValue = evaluate(stmt.value().get());
+
+        throw new Return.ReturnException(retValue);
     }
 
 }
