@@ -23,9 +23,18 @@ public final class LoxClass implements LoxValue, LoxCallable {
         return name;
     }
 
+    // NOTE: Even with an Optional<? extends Obj> I let a NullPointerException to sneak into
+    // That's because this Optional is bullshit!
+    // It can be null itself!
     public Optional<LoxFunction> findMethod(String name) {
         return Optional.ofNullable(methods.get(name))
-                .or(() -> superclass.map(cl -> cl.findMethod(name)).get());
+            .or(() -> {
+                    var sup = superclass.map(cl -> cl.findMethod(name));
+                    if (sup.isEmpty()) {
+                        return Optional.empty();
+                    }
+                    return sup.get();
+                });
     }
 
     @Override
