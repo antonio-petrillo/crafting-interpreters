@@ -306,7 +306,7 @@ const TokenType = enum(u8) {
 };
 
 const Token = struct {
-    type_: TokenType,
+    tokenType: TokenType,
     line: usize,
     source: []const u8,
 };
@@ -342,6 +342,13 @@ const Scanner = struct {
         return s.source[s.current + offset];
     }
 
+    fn peekAndAdvance(s: *Scanner, target: u8) bool {
+        if (s.current >= s.source.len) return false;
+        const doesMatch = s.source[s.current] == target;
+        if (doesMatch) s.current += 1;
+        return doesMatch;
+    }
+
     fn match(s: *Scanner, offset: usize, target: u8) bool {
         if (s.current + offset >= s.source.len) return false;
         return s.source[s.current + offset] == target;
@@ -351,7 +358,7 @@ const Scanner = struct {
         return .{
             .source = s.source[s.start..s.current],
             .line = s.line,
-            .type_ = tt,
+            .tokenType = tt,
         };
     }
 
@@ -404,7 +411,7 @@ const Scanner = struct {
 
     fn identifier(s: *Scanner, start: u8) Token {
         var index: usize = s.current + 1;
-        while (index < s.source.len and isAlpha(s.source[index])) : (index += 1) {}
+        while (index < s.source.len and isAlphaNumeric(s.source[index])) : (index += 1) {}
         const str = s.source[s.current..index];
         const tt = switch (start) {
             'a' => checkKeyword(str, "nd", .And),
@@ -461,10 +468,10 @@ const Scanner = struct {
             '-' => s.token(.Minus),
             '*' => s.token(.Star),
             '/' => s.token(.Slash),
-            '!' => s.token(if (s.match(1, '=')) .BangEqual else .Bang),
-            '=' => s.token(if (s.match(1, '=')) .EqualEqual else .Equal),
-            '<' => s.token(if (s.match(1, '=')) .LessEqual else .Less),
-            '>' => s.token(if (s.match(1, '=')) .GreaterEqual else .Greater),
+            '!' => s.token(if (s.peekAndAdvance('=')) .BangEqual else .Bang),
+            '=' => s.token(if (s.peekAndAdvance('=')) .EqualEqual else .Equal),
+            '<' => s.token(if (s.peekAndAdvance('=')) .LessEqual else .Less),
+            '>' => s.token(if (s.peekAndAdvance('=')) .GreaterEqual else .Greater),
             '"' => try s.string(),
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' => s.number(),
             else => s.identifier(c),
@@ -488,10 +495,11 @@ fn isDigit(c: u8) bool {
 }
 const code =
     \\( ) {  } + - * / . , = == != ! > >= < <=
-    \\0 00 01 10 11 1.1 121 3.14159 42
-    \\ "" "ciao" "Hello, World!" "00 01 10 11 > < y_y"
-    \\ var if else this super false true var variableName class
+    \\0 01 42 3.14159
+    \\ "" "Sucuzzone" "Hello, World!" "00 01 10 11 > < y_y"
+    \\ var if else this super false true class
     \\ and or while for fun nil return print
+    \\ variableName variableName_1 variableName_12
 ;
 
 test "simple test scanner (just too see the output)" {
@@ -507,6 +515,77 @@ test "simple test scanner (just too see the output)" {
             }, // Fail
         };
 
-        std.debug.print("Token {d}-th =>\n\tsource: '{s}'\n\tline: {d}\n\ttype: '{s}'\n", .{ i, tk.source, tk.line, tk.type_.str() });
+        std.debug.print("Token {d}-th =>\tsource: '{s}'\tline: {d}\ttype: '{s}'\n", .{ i, tk.source, tk.line, tk.tokenType.str() });
+    }
+}
+
+test "check scanner return the expected token" {
+    var s = Scanner.init(code);
+    const expecteds = [_]Token{ // Test battery for variable 'code'
+        .{ .line = 1, .source = "(", .tokenType = .LeftParen },
+        .{ .line = 1, .source = ")", .tokenType = .RightParen },
+        .{ .line = 1, .source = "{", .tokenType = .LeftBrace },
+        .{ .line = 1, .source = "}", .tokenType = .RightBrace },
+        .{ .line = 1, .source = "+", .tokenType = .Plus },
+        .{ .line = 1, .source = "-", .tokenType = .Minus },
+        .{ .line = 1, .source = "*", .tokenType = .Star },
+        .{ .line = 1, .source = "/", .tokenType = .Slash },
+        .{ .line = 1, .source = ".", .tokenType = .Dot },
+        .{ .line = 1, .source = ",", .tokenType = .Comma },
+        .{ .line = 1, .source = "=", .tokenType = .Equal },
+        .{ .line = 1, .source = "==", .tokenType = .EqualEqual },
+        .{ .line = 1, .source = "!=", .tokenType = .BangEqual },
+        .{ .line = 1, .source = "!", .tokenType = .Bang },
+        .{ .line = 1, .source = ">", .tokenType = .Greater },
+        .{ .line = 1, .source = ">=", .tokenType = .GreaterEqual },
+        .{ .line = 1, .source = "<", .tokenType = .Less },
+        .{ .line = 1, .source = "<=", .tokenType = .LessEqual },
+        .{ .line = 2, .source = "0", .tokenType = .Number },
+        .{ .line = 2, .source = "01", .tokenType = .Number },
+        .{ .line = 2, .source = "42", .tokenType = .Number },
+        .{ .line = 2, .source = "3.14159", .tokenType = .Number },
+        .{ .line = 3, .source = "\"\"", .tokenType = .String },
+        .{ .line = 3, .source = "\"Sucuzzone\"", .tokenType = .String },
+        .{ .line = 3, .source = "\"Hello, World!\"", .tokenType = .String },
+        .{ .line = 3, .source = "\"00 01 10 11 > < y_y\"", .tokenType = .String },
+        .{ .line = 4, .source = "var", .tokenType = .Var },
+        .{ .line = 4, .source = "if", .tokenType = .If },
+        .{ .line = 4, .source = "else", .tokenType = .Else },
+        .{ .line = 4, .source = "this", .tokenType = .This },
+        .{ .line = 4, .source = "super", .tokenType = .Super },
+        .{ .line = 4, .source = "false", .tokenType = .False },
+        .{ .line = 4, .source = "true", .tokenType = .True },
+        .{ .line = 4, .source = "class", .tokenType = .Class },
+        .{ .line = 5, .source = "and", .tokenType = .And },
+        .{ .line = 5, .source = "or", .tokenType = .Or },
+        .{ .line = 5, .source = "while", .tokenType = .While },
+        .{ .line = 5, .source = "for", .tokenType = .For },
+        .{ .line = 5, .source = "fun", .tokenType = .Fun },
+        .{ .line = 5, .source = "nil", .tokenType = .Nil },
+        .{ .line = 5, .source = "return", .tokenType = .Return },
+        .{ .line = 5, .source = "print", .tokenType = .Print },
+        .{ .line = 6, .source = "variableName", .tokenType = .Identifier },
+        .{ .line = 6, .source = "variableName_1", .tokenType = .Identifier },
+        .{ .line = 6, .source = "variableName_12", .tokenType = .Identifier },
+    };
+
+    var i: usize = 0;
+    while (true) : (i += 1) {
+        const actual = s.nextToken() catch |err| switch (err) {
+            error.EOF => {
+                if (i != expecteds.len) {
+                    try testing.expect(false); // fail
+                }
+                break;
+            },
+            else => {
+                try testing.expect(false);
+                break;
+            }, // Fail
+        };
+        const expected = expecteds[i];
+        try testing.expectEqual(expected.line, actual.line);
+        try testing.expect(std.mem.eql(u8, expected.source, actual.source));
+        try testing.expectEqual(expected.tokenType, actual.tokenType);
     }
 }
