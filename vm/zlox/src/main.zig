@@ -31,10 +31,16 @@ fn repl(vm: *zlox.VM) !void {
         std.debug.print("{s} ", .{PROMPT});
         defer std.debug.print("\n", .{});
         if (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
-            std.debug.print("line := {s}", .{line});
             vm.interpret(line) catch |err| switch (err) {
-                error.RuntimeErr => std.process.exit(70),
-                error.CompileErr => std.process.exit(65),
+                error.EOF => {},
+                error.RuntimeErr => {
+                    std.debug.print("Runtime Err!\n", .{});
+                    std.process.exit(70);
+                },
+                error.UnclosedString => {
+                    std.debug.print("String literal not closed properly\n", .{});
+                    std.process.exit(65);
+                },
             };
         }
     }
@@ -58,7 +64,14 @@ fn runFile(vm: *zlox.VM, path: []const u8) !void {
     defer vm.alloc.free(source);
 
     vm.interpret(source) catch |err| switch (err) {
-        error.RuntimeErr => std.process.exit(70),
-        error.CompileErr => std.process.exit(65),
+        error.EOF => {},
+        error.RuntimeErr => {
+            std.debug.print("Runtime Err!\n", .{});
+            std.process.exit(70);
+        },
+        error.UnclosedString => {
+            std.debug.print("String literal not closed properly\n", .{});
+            std.process.exit(65);
+        },
     };
 }

@@ -88,8 +88,7 @@ test "simple chunk test" {
 
 pub const VMError = error{
     RuntimeErr,
-    CompileErr,
-};
+} || CompilerErr;
 
 pub const VM = struct {
     alloc: Allocator,
@@ -132,8 +131,8 @@ pub const VM = struct {
     }
 
     pub fn interpret(vm: *VM, source: []const u8) VMError!void {
-        _ = vm;
-        _ = source;
+        var c = Compiler.init(vm);
+        try c.compile(source);
         return;
     }
 
@@ -589,3 +588,32 @@ test "check scanner return the expected token" {
         try testing.expectEqual(expected.tokenType, actual.tokenType);
     }
 }
+
+const CompilerErr = error{} || ScannerErr;
+
+const Compiler = struct {
+    vm: *VM,
+
+    pub fn init(vm: *VM) Compiler {
+        return .{
+            .vm = vm,
+        };
+    }
+
+    pub fn compile(c: *Compiler, source: []const u8) CompilerErr!void {
+        _ = c;
+        var scanner = Scanner.init(source);
+        var line: usize = 0;
+
+        while (true) {
+            const tok = try scanner.nextToken();
+            if (line != tok.line) {
+                line = tok.line;
+                std.debug.print("{d: >4} ", .{line});
+            } else {
+                std.debug.print("  | ", .{});
+            }
+            std.debug.print("<{s}> '{s}'\n", .{ tok.tokenType.str(), tok.source });
+        }
+    }
+};
