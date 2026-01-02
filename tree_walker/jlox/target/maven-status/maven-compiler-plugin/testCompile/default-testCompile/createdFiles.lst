@@ -1,0 +1,3 @@
+com\craftinginterpreters\lox\ParserTest.class
+com\craftinginterpreters\lox\EnvironmentTest.class
+com\craftinginterpreters\lox\ScannerTest.class
