@@ -1,1 +1,4 @@
 clox
+*.exe
+*.ilk
+*.pdb
